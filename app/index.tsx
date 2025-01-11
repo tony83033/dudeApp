@@ -6,7 +6,7 @@ const Welcome = () => {
     return (
         <SafeAreaView>
             <View className="bg-green-500 h-48">
-            <Text className="text-red-600 text-2xl">welcom to app </Text>
+            <Text className="text-red-600 text-2xl">Welcome to app </Text>
             <Link href="/(auth)/sign-up" className="text-blue-600">Sign In</Link>
             <Link href="/home" className="text-red-600">Sign go to home</Link>
             </View>
