@@ -9,7 +9,7 @@ import 'react-native-reanimated';
 import "../global.css";
 import GlobalProvider from '@/context/GlobalProvider';
 import { useColorScheme } from '@/hooks/useColorScheme';
-
+import { ROUTES } from './routes';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -38,6 +38,9 @@ export default function RootLayout() {
      
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+
+       
         
 
       </Stack>
