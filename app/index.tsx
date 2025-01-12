@@ -1,11 +1,15 @@
 import { View, SafeAreaView, Text, TouchableOpacity, Dimensions } from "react-native";
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-
+import { router,Redirect } from "expo-router";
+import { useGlobalContext } from "@/context/GlobalProvider";
 const Welcome = () => {
   const { width, height } = Dimensions.get("window");
+    const { isLogged } = useGlobalContext();
 
+   if(isLogged) {
+    return <Redirect href="/home" />;
+   }
   return (
     <SafeAreaView className="flex-1">
       {/* Gradient Background */}

@@ -12,12 +12,15 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
+import { Link, router,Redirect } from 'expo-router';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import { signIn, getCurrentUser } from '@/lib/handleAuth';
-const SignIn = () => {  
-  const { setUser, setIsLogged } = useGlobalContext();
 
+const SignIn = () => {  
+  const { setUser, setIsLogged,isLogged } = useGlobalContext();
+  if(isLogged) {
+      return <Redirect href="/home" />;
+     }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 

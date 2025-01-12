@@ -1,5 +1,5 @@
 // app/(tabs)/home.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TextInput, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +8,8 @@ import { Card } from '../../components/ui/Card';
 import { useLocation } from '../../hooks/useLocation';
 import { LocationExpandedView } from '../../components/LocationExpandedView';
 import { router } from 'expo-router';
-
+import {fetchFeaturedProducts} from "../../lib/fetchProducts";
+import {Product} from "../../types/productTypes"; // impot types of product , structure give by database
 const { width } = Dimensions.get('window');
 
 // Types
@@ -101,6 +102,42 @@ const Home: React.FC = () => {
   const { location, address, loading, error, getLocation } = useLocation();
   const [showLocationExpanded, setShowLocationExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]); // State for featured products
+  const [isLoading, setIsLoading] = useState(true); // Loading state for fetching products
+  const [errorMessage, setErrorMessage] = useState(''); // Error state for fetching products
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setIsLoading(true);
+        const products = await fetchFeaturedProducts();
+        setFeaturedProducts(products);
+       console.log(products);
+      } catch (error) {
+        setErrorMessage('Failed to fetch products. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
+
+  // Render loading or error states
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>{errorMessage}</Text>
+      </View>
+    );
+  }
 
   const LocationHeader = () => (
     <TouchableOpacity 
@@ -214,12 +251,15 @@ const Home: React.FC = () => {
             showsHorizontalScrollIndicator={false}
             className="px-4"
           >
-            {BEST_SELLERS.map((item) => (
+            {featuredProducts.map((product) => (
               <ProductCard
-                key={item.id}
-                large
-                {...item}
-                onPress={() => handleProductPress(item.id)}
+                key={product.$id}
+                image={{ uri: product.imageUrl }}
+                name={product.name}
+                price={`₹${product.price}`}
+                mrp={product.mrp ? `₹${product.mrp}` : undefined}
+                discount={product.discount ? `${product.discount}% OFF` : undefined}
+                onPress={() => handleProductPress(product.$id)}
               />
             ))}
           </ScrollView>
