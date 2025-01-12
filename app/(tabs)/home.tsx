@@ -173,11 +173,12 @@ const Home: React.FC = () => {
   );
 
   const handleProductPress = (productId: string) => {
-    router.push(`/(app)/product/${productId}` as any);
+    // Navigate to the dynamic product route
+    router.push(`/product/${productId}`);
   };
-
   const handleCategoryPress = (categoryId: string) => {
-    router.push(`/(app)/category/${categoryId}` as any);
+    // Navigate to the dynamic category route
+    router.push(`/category/${categoryId}`);
   };
 
   return (
