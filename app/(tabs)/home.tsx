@@ -8,8 +8,9 @@ import { Card } from '../../components/ui/Card';
 import { useLocation } from '../../hooks/useLocation';
 import { LocationExpandedView } from '../../components/LocationExpandedView';
 import { router } from 'expo-router';
-import {fetchFeaturedProducts} from "../../lib/fetchProducts";
+import {fetchFeaturedProducts,fetchTopCategories } from "../../lib/fetchProducts";
 import {Product} from "../../types/productTypes"; // impot types of product , structure give by database
+import { Category } from '@/types/categoryTypes';
 const { width } = Dimensions.get('window');
 
 // Types
@@ -106,13 +107,15 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true); // Loading state for fetching products
   const [errorMessage, setErrorMessage] = useState(''); // Error state for fetching products
 
+  const [topCategories, setTopCategories] = useState<Category[]>([]); // for top category
+
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setIsLoading(true);
         const products = await fetchFeaturedProducts();
         setFeaturedProducts(products);
-       console.log(products);
+       //console.log(products);
       } catch (error) {
         setErrorMessage('Failed to fetch products. Please try again.');
       } finally {
@@ -121,6 +124,20 @@ const Home: React.FC = () => {
     };
     loadProducts();
   }, []);
+
+  /// use effectt for top categories
+useEffect(() => {
+  const loadTopCategories = async () => {
+    try {
+      const categories = await fetchTopCategories();
+      setTopCategories(categories);
+    } catch (error) {
+      console.error('Error fetching top categories:', error);
+    }
+  };
+
+  loadTopCategories();
+}, []);
 
   // Render loading or error states
   if (isLoading) {
@@ -268,20 +285,22 @@ const Home: React.FC = () => {
 
         {/* Top Categories */}
         <Section 
-          title="Top Categories"
-          showViewAll
-          onViewAll={() => router.push('/categories')}
-        >
-          <View className="flex-row flex-wrap justify-between px-4">
-            {CATEGORIES.map((category) => (
-              <CategoryCard
-                key={category.id}
-                {...category}
-                onPress={() => handleCategoryPress(category.id)}
-              />
-            ))}
-          </View>
-        </Section>
+  title="Top Categories"
+  showViewAll
+  onViewAll={() => router.push('/categories')}
+>
+  <View className="flex-row flex-wrap justify-between px-4">
+    {topCategories.map((category) => (
+      <CategoryCard
+        key={category.$id}
+        title={category.name}
+        startingPrice="Starting at ₹0" // Add this field to your schema if needed
+        image={{ uri: category.imageUrl }}
+        onPress={() => handleCategoryPress(category.categoryId)}
+      />
+    ))}
+  </View>
+</Section>
 
         {/* Season Essentials */}
         <Section title="Season Essentials">

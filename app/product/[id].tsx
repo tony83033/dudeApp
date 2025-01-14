@@ -4,7 +4,7 @@ import { View, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
-import { fetchProductsById,fetchProductsByCategory } from '../../lib/fetchProducts';
+import { fetchProductsById,fetchProductsByCategoryId } from '../../lib/fetchProducts';
 import { Product } from '../../types/productTypes';
 import ProductCard from '../../components/customComponents/ProductCard';
 
@@ -41,7 +41,7 @@ const ProductScreen = () => {
     const loadRelatedProducts = async () => {
       try {
         setIsLoading(true);
-        const products = await fetchProductsByCategory(product?.categoryId || '');
+        const products = await fetchProductsByCategoryId(product?.categoryId || '');
         setRelatedProducts(products);
       } catch (error) {
         console.error('Failed to fetch related products:', error);
