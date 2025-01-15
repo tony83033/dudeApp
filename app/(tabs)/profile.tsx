@@ -1,6 +1,6 @@
 // app/(tabs)/profile.tsx
 import React from 'react';
-import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Image, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/Text';
@@ -28,6 +28,16 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: 'Check out this amazing app!',
+      });
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Profile Header */}
@@ -52,47 +62,47 @@ const ProfileScreen: React.FC = () => {
         <MenuItem
           icon="share-social-outline"
           title="Share App"
-          onPress={() => console.log('Share')}
+          onPress={handleShare}
         />
         <MenuItem
           icon="document-text-outline"
           title="My Orders"
-          onPress={() => router.push('/(app)/orders' as any)}
+          onPress={() => router.push('/orders' as any)}
         />
         <MenuItem
           icon="wallet-outline"
           title="My Earning"
-          onPress={() => console.log('Earnings')}
+          onPress={() => router.push('/earnings' as any)}
         />
         <MenuItem
           icon="people-outline"
           title="My Referral"
-          onPress={() => console.log('Referral')}
+          onPress={() => router.push('/referral' as any)}
         />
         <MenuItem
           icon="headset-outline"
           title="Customer Support"
-          onPress={() => console.log('Support')}
+          onPress={() => router.push('/support' as any)}
         />
         <MenuItem
           icon="language-outline"
           title="Change Language"
-          onPress={() => console.log('Language')}
+          onPress={() => router.push('/language' as any)}
         />
         <MenuItem
           icon="location-outline"
           title="My Addresses"
-          onPress={() => router.push('/(app)/addresses' as any)}
+          onPress={() => router.push('/addresses' as any)}
         />
         <MenuItem
           icon="document-outline"
           title="Terms & Conditions"
-          onPress={() => console.log('Terms')}
+          onPress={() => router.push('/terms' as any)}
         />
         <MenuItem
           icon="shield-outline"
           title="Account Privacy"
-          onPress={() => console.log('Privacy')}
+          onPress={() => router.push('/privacy' as any)}
         />
         <MenuItem
           icon="log-out-outline"
