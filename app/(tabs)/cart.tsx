@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Image, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/Text';
@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { fetchCart, updateCart, removeFromCart, clearCart } from '../../lib/handleCart';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface CartItem {
   productId: string;
@@ -26,7 +27,7 @@ const CartScreen: React.FC = () => {
   useEffect(() => {
     const loadCart = async () => {
       try {
-        const userId = user?.$id.toString(); // Replace with the actual user ID
+        const userId = user?.$id.toString();
         const cart = await fetchCart(userId || '');
         setCartItems(cart.items);
       } catch (error) {
@@ -41,7 +42,7 @@ const CartScreen: React.FC = () => {
 
   const updateQuantity = async (productId: string, newQuantity: number) => {
     try {
-      const userId = user?.$id.toString(); // Replace with the actual user ID
+      const userId = user?.$id.toString();
       const updatedItems = cartItems.map(item =>
         item.productId === productId ? { ...item, quantity: newQuantity } : item
       );
@@ -54,7 +55,7 @@ const CartScreen: React.FC = () => {
 
   const handleRemoveItem = async (productId: string) => {
     try {
-      const userId = user?.$id.toString(); // Replace with the actual user ID
+      const userId = user?.$id.toString();
       await removeFromCart(userId || '', productId);
       const updatedItems = cartItems.filter(item => item.productId !== productId);
       setCartItems(updatedItems);
@@ -65,9 +66,9 @@ const CartScreen: React.FC = () => {
 
   const handleClearCart = async () => {
     try {
-      const userId = user?.$id.toString(); // Replace with the actual user ID
+      const userId = user?.$id.toString();
       await clearCart(userId || '');
-      setCartItems([]); // Clear the local state
+      setCartItems([]);
     } catch (error) {
       console.error('Error clearing cart:', error);
     }
@@ -77,12 +78,6 @@ const CartScreen: React.FC = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-
-
-  //  const handleProductPress = (productId: string) => {
-  //     // Navigate to the dynamic product route
-  //     router.push(`/product/${productId}`);
-  //   };
 
   if (loading) {
     return (
@@ -96,10 +91,18 @@ const CartScreen: React.FC = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1">
+      <LinearGradient
+        colors={['#FFFFFF', '#F3F4F6']}
+        className="flex-1"
+      >
         {/* Header */}
-        <View className="p-4 border-b border-gray-200">
-          <Text className="text-xl font-bold">Shopping Cart</Text>
+        <View className="p-4 border-b border-gray-200 shadow-sm">
+          <View className="flex-row items-center">
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text className="text-xl font-bold ml-4">Shopping Cart</Text>
+          </View>
         </View>
 
         {/* Cart Items */}
@@ -109,12 +112,12 @@ const CartScreen: React.FC = () => {
               key={item.productId}
               item={item}
               onUpdateQuantity={updateQuantity}
-              onRemoveItem={handleRemoveItem} // Pass the remove function
+              onRemoveItem={handleRemoveItem}
             />
           ))}
 
           {/* Offers Section */}
-          <Card className="m-4 p-4">
+          <Card className="m-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50">
             <Text className="font-bold mb-2">Available Offers</Text>
             <View className="flex-row items-center">
               <Ionicons name="pricetag" size={20} color="#22C55E" />
@@ -126,19 +129,19 @@ const CartScreen: React.FC = () => {
         </ScrollView>
 
         {/* Bottom Sheet */}
-        <View className="border-t border-gray-200 p-4">
+        <View className="border-t border-gray-200 p-4 bg-white">
           <View className="flex-row justify-between mb-4">
             <Text className="text-gray-600">Total Amount</Text>
             <Text className="font-bold">₹{totalAmount}</Text>
           </View>
-          <Button onPress={() => console.log('Proceed to checkout')}>
+          <Button onPress={() => console.log('Proceed to checkout')} className="bg-blue-500">
             Proceed to Checkout
           </Button>
-          <Button onPress={handleClearCart} className="mt-2 bg-red-500">
-            Clear Cart
-          </Button>
+          <TouchableOpacity onPress={handleClearCart} className="mt-2">
+            <Text className="text-red-500 text-center">Clear Cart</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -146,51 +149,50 @@ const CartScreen: React.FC = () => {
 interface CartItemCardProps {
   item: CartItem;
   onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void; // Add this prop
+  onRemoveItem: (productId: string) => void;
 }
 
 const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity, onRemoveItem }) => (
   <TouchableOpacity onPress={() => handleProductPress(item.productId)}>
-  <View className="p-4 border-b border-gray-200">
-    <View className="flex-row">
-      <Image source={{ uri: item.imageUrl }} className="w-20 h-20 rounded" />
-      <View className="flex-1 ml-4">
-        <Text className="font-medium">{item.name}</Text>
-        <Text className="text-gray-600 mt-1">₹{item.price}</Text>
-        
-        {/* Quantity Controls */}
-        <View className="flex-row items-center mt-2">
+    <View className="p-4 border-b border-gray-200">
+      <View className="flex-row">
+        <Image source={{ uri: item.imageUrl }} className="w-24 h-24 rounded-lg" />
+        <View className="flex-1 ml-4">
+          <Text className="font-medium text-lg">{item.name}</Text>
+          <Text className="text-gray-600 mt-1">₹{item.price}</Text>
+          
+          {/* Quantity Controls */}
+          <View className="flex-row items-center mt-2">
+            <TouchableOpacity
+              onPress={() => onUpdateQuantity(item.productId, Math.max(0, item.quantity - 1))}
+              className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+            >
+              <Ionicons name="remove" size={20} color="black" />
+            </TouchableOpacity>
+            <Text className="mx-4">{item.quantity}</Text>
+            <TouchableOpacity
+              onPress={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+              className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+            >
+              <Ionicons name="add" size={20} color="black" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Remove Button */}
           <TouchableOpacity
-            onPress={() => onUpdateQuantity(item.productId, Math.max(0, item.quantity - 1))}
-            className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+            onPress={() => onRemoveItem(item.productId)}
+            className="mt-2"
           >
-            <Ionicons name="remove" size={20} color="black" />
-          </TouchableOpacity>
-          <Text className="mx-4">{item.quantity}</Text>
-          <TouchableOpacity
-            onPress={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-            className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
-          >
-            <Ionicons name="add" size={20} color="black" />
+            <Ionicons name="trash" size={20} color="#EF4444" />
           </TouchableOpacity>
         </View>
-
-        {/* Remove Button */}
-        <TouchableOpacity
-          onPress={() => onRemoveItem(item.productId)}
-          className="mt-2 bg-red-500 px-4 py-2 rounded"
-        >
-          <Text className="text-white">Remove</Text>
-        </TouchableOpacity>
       </View>
     </View>
-  </View>
   </TouchableOpacity>
 );
 
 export default CartScreen;
 
 function handleProductPress(productId: string): void {
-  // throw new Error('Function not implemented.');
   router.push(`/product/${productId}`);
 }
