@@ -7,13 +7,15 @@ import { Button } from '../../components/ui/Button';
 import { fetchProductsById,fetchProductsByCategoryId } from '../../lib/fetchProducts';
 import { Product } from '../../types/productTypes';
 import ProductCard from '../../components/customComponents/ProductCard';
-
+import {addToCart} from "../../lib/handleCart";
+import { useGlobalContext } from '@/context/GlobalProvider';
 const ProductScreen = () => {
   const { id } = useLocalSearchParams(); // Get the product ID from the route
   const [product, setProduct] = useState<Product | null>(null); // State for product details
   const [isLoading, setIsLoading] = useState(true); // Loading state
   const [error, setError] = useState(''); // Error state
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]); // State for related products
+  const { user } = useGlobalContext(); // to get current userId
 
   // Fetch product details
   useEffect(() => {
@@ -86,6 +88,21 @@ const ProductScreen = () => {
       router.push(`/product/${productId}`);
     };
 
+    const handleAddToCart = async () => {
+      if (!user) {
+        console.log('User not logged in');
+        return;
+      }
+      try {
+        await addToCart(user?.$id, product.$id, 1, product.price,product.imageUrl,product.name);
+        console.log('Added to cart');
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+      }
+      console.log('Added to cart', user?.$id);
+
+    }
+
   return (
     <ScrollView className="flex-1 bg-white">
       {/* Product Image */}
@@ -128,9 +145,10 @@ const ProductScreen = () => {
 
         {/* Add to Cart Button */}
         <Button 
-          onPress={() => console.log('Add to cart')}
+          onPress={handleAddToCart}
           className="mt-6"
-          disabled={product.stock <= 0} // Disable button if out of stock
+          disabled={product.stock <= 0} 
+          // Disable button if out of stock
         >
           {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
         </Button>

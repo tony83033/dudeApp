@@ -1,124 +1,70 @@
-// app/(tabs)/cart.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-// import { Text, Card, Button } from '../../components/ui';
-import {Text} from "../../components/ui/Text";
-import {Card} from "../../components/ui/Card";
-import {Button} from "../../components/ui/Button";
-
-
-
-const UNSPLASH_IMAGES = {
-    salt: "https://images.unsplash.com/photo-1626197031507-c17099753214?w=500&q=80",
-    sugar: "https://images.unsplash.com/photo-1622484211148-c6b9d8dba7bb?w=500&q=80",
-    atta: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80",
-    rice: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&q=80",
-    oil: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=500&q=80",
-    spices: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&q=80",
-    fruits: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500&q=80",
-    vegetables: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=500&q=80",
-    beverages: "https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80",
-    snacks: "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=500&q=80",
-    dairy: "https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=500&q=80",
-    cleaning: "https://images.unsplash.com/photo-1585236849737-9d77131a2b4b?w=500&q=80",
-    personal_care: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80",
-    baby_care: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500&q=80",
-    household: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=500&q=80",
-    masala: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&q=80",
-    dry_fruits: "https://images.unsplash.com/photo-1596591606975-97ee5cef3a1e?w=500&q=80",
-    tea: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=500&q=80",
-    coffee: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80",
-    biscuits: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500&q=80",
-    noodles: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=500&q=80",
-    chocolates: "https://images.unsplash.com/photo-1511381939415-e44015466834?w=500&q=80",
-    jam: "https://images.unsplash.com/photo-1622205313162-be1d5712a43b?w=500&q=80",
-  };
+import { Text } from '../../components/ui/Text';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { fetchCart, updateCart } from '../../lib/handleCart';
+import { useGlobalContext } from '@/context/GlobalProvider';
 
 interface CartItem {
-  id: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
-  image: any;
+  imageUrl: string;
 }
 
 const CartScreen: React.FC = () => {
-// For CartScreen:
-const [cartItems, setCartItems] = React.useState<CartItem[]>([
-    {
-      id: '1',
-      name: 'Sampoorti Iodised Salt - 1 Kg',
-      price: 56,
-      quantity: 4,
-      image: { uri: UNSPLASH_IMAGES.salt },
-    },
-    {
-      id: '2',
-      name: 'Tata Premium Tea - 500g',
-      price: 285,
-      quantity: 1,
-      image: { uri: UNSPLASH_IMAGES.tea },
-    },
-    // Add more items
-  ]);
-  
- 
-  
-  // For Categories:
-  const categoryData = {
-    grocery: {
-      title: "Grocery",
-      items: [
-        {
-          title: "Masala & Spices",
-          image: UNSPLASH_IMAGES.masala,
-        },
-        {
-          title: "Dry Fruits",
-          image: UNSPLASH_IMAGES.dry_fruits,
-        },
-        {
-          title: "Rice & Rice Products",
-          image: UNSPLASH_IMAGES.rice,
-        },
-        {
-          title: "Cooking Oil",
-          image: UNSPLASH_IMAGES.oil,
-        },
-        // Add more items
-      ]
-    },
-    beverages: {
-      title: "Beverages",
-      items: [
-        {
-          title: "Tea & Coffee",
-          image: UNSPLASH_IMAGES.tea,
-        },
-        {
-          title: "Soft Drinks",
-          image: UNSPLASH_IMAGES.beverages,
-        },
-        // Add more items
-      ]
-    },
-    // Add more categories
-  };
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const updateQuantity = (id: string, newQuantity: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+  const { user } = useGlobalContext();
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const userId = user?.$id.toString(); // Replace with the actual user ID
+        const cart = await fetchCart(userId || '');
+        setCartItems(cart.items);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCart();
+  }, [user]);
+
+  const updateQuantity = async (productId: string, newQuantity: number) => {
+    try {
+      const userId = user?.$id.toString(); // Replace with the actual user ID
+      const updatedItems = cartItems.map(item =>
+        item.productId === productId ? { ...item, quantity: newQuantity } : item
+      );
+      await updateCart(userId || '', updatedItems);
+      setCartItems(updatedItems);
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+    }
   };
 
   const totalAmount = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center">
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -132,7 +78,7 @@ const [cartItems, setCartItems] = React.useState<CartItem[]>([
         <ScrollView className="flex-1">
           {cartItems.map(item => (
             <CartItemCard
-              key={item.id}
+              key={item.productId}
               item={item}
               onUpdateQuantity={updateQuantity}
             />
@@ -167,13 +113,13 @@ const [cartItems, setCartItems] = React.useState<CartItem[]>([
 
 interface CartItemCardProps {
   item: CartItem;
-  onUpdateQuantity: (id: string, quantity: number) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
 }
 
 const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity }) => (
   <View className="p-4 border-b border-gray-200">
     <View className="flex-row">
-      <Image source={item.image} className="w-20 h-20 rounded" />
+      <Image source={{ uri: item.imageUrl }} className="w-20 h-20 rounded" />
       <View className="flex-1 ml-4">
         <Text className="font-medium">{item.name}</Text>
         <Text className="text-gray-600 mt-1">₹{item.price}</Text>
@@ -181,14 +127,14 @@ const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity }) =
         {/* Quantity Controls */}
         <View className="flex-row items-center mt-2">
           <TouchableOpacity
-            onPress={() => onUpdateQuantity(item.id, Math.max(0, item.quantity - 1))}
+            onPress={() => onUpdateQuantity(item.productId, Math.max(0, item.quantity - 1))}
             className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
           >
             <Ionicons name="remove" size={20} color="black" />
           </TouchableOpacity>
           <Text className="mx-4">{item.quantity}</Text>
           <TouchableOpacity
-            onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
+            onPress={() => onUpdateQuantity(item.productId, item.quantity + 1)}
             className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
           >
             <Ionicons name="add" size={20} color="black" />
