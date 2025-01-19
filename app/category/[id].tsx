@@ -1,7 +1,7 @@
 // app/category/[id].tsx
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, ActivityIndicator, Image } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '../../components/ui/Text';
 import { ProductCard } from '../../components/ui/ProductCard';
 import { fetchProductsByCategoryId } from '../../lib/fetchProducts';
@@ -78,7 +78,7 @@ const CategoryScreen = () => {
               price={`₹${product.price}`}
               mrp={product.mrp ? `₹${product.mrp}` : undefined}
               discount={product.discount ? `${product.discount}% OFF` : undefined}
-              onPress={() => console.log(`Pressed ${product.name}`)}
+              onPress={() =>router.push(`/product/${product.$id}`)}
             />
           ))}
         </View>

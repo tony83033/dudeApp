@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { fetchCart, updateCart, removeFromCart, clearCart } from '../../lib/handleCart';
 import { useGlobalContext } from '@/context/GlobalProvider';
+import { router } from 'expo-router';
 
 interface CartItem {
   productId: string;
@@ -77,6 +78,12 @@ const CartScreen: React.FC = () => {
     0
   );
 
+
+  //  const handleProductPress = (productId: string) => {
+  //     // Navigate to the dynamic product route
+  //     router.push(`/product/${productId}`);
+  //   };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -143,6 +150,7 @@ interface CartItemCardProps {
 }
 
 const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity, onRemoveItem }) => (
+  <TouchableOpacity onPress={() => handleProductPress(item.productId)}>
   <View className="p-4 border-b border-gray-200">
     <View className="flex-row">
       <Image source={{ uri: item.imageUrl }} className="w-20 h-20 rounded" />
@@ -177,6 +185,12 @@ const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity, onR
       </View>
     </View>
   </View>
+  </TouchableOpacity>
 );
 
 export default CartScreen;
+
+function handleProductPress(productId: string): void {
+  // throw new Error('Function not implemented.');
+  router.push(`/product/${productId}`);
+}
