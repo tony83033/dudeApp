@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/Text';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { fetchCart, updateCart } from '../../lib/handleCart';
+import { fetchCart, updateCart, removeFromCart, clearCart } from '../../lib/handleCart';
 import { useGlobalContext } from '@/context/GlobalProvider';
 
 interface CartItem {
@@ -51,6 +51,27 @@ const CartScreen: React.FC = () => {
     }
   };
 
+  const handleRemoveItem = async (productId: string) => {
+    try {
+      const userId = user?.$id.toString(); // Replace with the actual user ID
+      await removeFromCart(userId || '', productId);
+      const updatedItems = cartItems.filter(item => item.productId !== productId);
+      setCartItems(updatedItems);
+    } catch (error) {
+      console.error('Error removing item:', error);
+    }
+  };
+
+  const handleClearCart = async () => {
+    try {
+      const userId = user?.$id.toString(); // Replace with the actual user ID
+      await clearCart(userId || '');
+      setCartItems([]); // Clear the local state
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
+  };
+
   const totalAmount = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -81,6 +102,7 @@ const CartScreen: React.FC = () => {
               key={item.productId}
               item={item}
               onUpdateQuantity={updateQuantity}
+              onRemoveItem={handleRemoveItem} // Pass the remove function
             />
           ))}
 
@@ -105,6 +127,9 @@ const CartScreen: React.FC = () => {
           <Button onPress={() => console.log('Proceed to checkout')}>
             Proceed to Checkout
           </Button>
+          <Button onPress={handleClearCart} className="mt-2 bg-red-500">
+            Clear Cart
+          </Button>
         </View>
       </View>
     </SafeAreaView>
@@ -114,9 +139,10 @@ const CartScreen: React.FC = () => {
 interface CartItemCardProps {
   item: CartItem;
   onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemoveItem: (productId: string) => void; // Add this prop
 }
 
-const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity }) => (
+const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity, onRemoveItem }) => (
   <View className="p-4 border-b border-gray-200">
     <View className="flex-row">
       <Image source={{ uri: item.imageUrl }} className="w-20 h-20 rounded" />
@@ -140,6 +166,14 @@ const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity }) =
             <Ionicons name="add" size={20} color="black" />
           </TouchableOpacity>
         </View>
+
+        {/* Remove Button */}
+        <TouchableOpacity
+          onPress={() => onRemoveItem(item.productId)}
+          className="mt-2 bg-red-500 px-4 py-2 rounded"
+        >
+          <Text className="text-white">Remove</Text>
+        </TouchableOpacity>
       </View>
     </View>
   </View>

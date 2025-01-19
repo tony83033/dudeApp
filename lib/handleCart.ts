@@ -131,3 +131,71 @@ export const updateCart = async (userId: string, items: Array<{ productId: strin
 };
 
 
+
+
+
+export const removeFromCart = async (userId: string, productId: string) => {
+  try {
+    // Fetch the user's cart
+    const response = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.cartsCollectionId,
+      [Query.equal('userId', userId)]
+    );
+
+    if (response.documents.length > 0) {
+      const cart = response.documents[0];
+      
+      // Filter out the item with the specified productId
+      interface CartItemRemove {
+        productId: string;
+        quantity: number;
+        price: number;
+        imageUrl: string;
+        name: string;
+      }
+
+      const updatedItems: string[] = cart.items.filter((item: string) => {
+        const parsedItem: CartItemRemove = JSON.parse(item); // Parse the JSON string
+        return parsedItem.productId !== productId; // Keep items that don't match the productId
+      });
+
+      // Update the cart with the remaining items
+      await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.cartsCollectionId,
+        cart.$id,
+        { items: updatedItems, updatedAt: new Date().toISOString() }
+      );
+    }
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    throw error;
+  }
+};
+
+
+
+
+export const clearCart = async (userId: string) => {
+  try {
+    const response = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.cartsCollectionId,
+      [Query.equal('userId', userId)]
+    );
+
+    if (response.documents.length > 0) {
+      const cartId = response.documents[0].$id;
+      await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.cartsCollectionId,
+        cartId,
+        { items: [], updatedAt: new Date().toISOString() } // Clear the items array
+      );
+    }
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    throw error;
+  }
+};
