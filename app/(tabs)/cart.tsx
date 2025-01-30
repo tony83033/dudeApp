@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Image, Animated } from 'react-native';
+// /app/(tabs)/cart.tsx
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { Text } from '../../components/ui/Text';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -18,12 +20,20 @@ interface CartItem {
   imageUrl: string;
 }
 
+// Define CartItemCardProps interface
+interface CartItemCardProps {
+  item: CartItem;
+  onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
+  onRemoveItem: (productId: string) => Promise<void>;
+}
+
 const CartScreen: React.FC = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const { user } = useGlobalContext();
 
+  // Fetch cart items
   useEffect(() => {
     const loadCart = async () => {
       try {
@@ -32,6 +42,11 @@ const CartScreen: React.FC = () => {
         setCartItems(cart.items);
       } catch (error) {
         console.error('Error fetching cart:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to load cart. Please try again.',
+        });
       } finally {
         setLoading(false);
       }
@@ -40,6 +55,7 @@ const CartScreen: React.FC = () => {
     loadCart();
   }, [user]);
 
+  // Update quantity
   const updateQuantity = async (productId: string, newQuantity: number) => {
     try {
       const userId = user?.$id.toString();
@@ -48,37 +64,71 @@ const CartScreen: React.FC = () => {
       );
       await updateCart(userId || '', updatedItems);
       setCartItems(updatedItems);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Quantity updated successfully!',
+      });
     } catch (error) {
       console.error('Error updating quantity:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update quantity. Please try again.',
+      });
     }
   };
 
+  // Remove item
   const handleRemoveItem = async (productId: string) => {
     try {
       const userId = user?.$id.toString();
       await removeFromCart(userId || '', productId);
       const updatedItems = cartItems.filter(item => item.productId !== productId);
       setCartItems(updatedItems);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Item removed from cart!',
+      });
     } catch (error) {
       console.error('Error removing item:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to remove item. Please try again.',
+      });
     }
   };
 
+  // Clear cart
   const handleClearCart = async () => {
     try {
       const userId = user?.$id.toString();
       await clearCart(userId || '');
       setCartItems([]);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Cart cleared successfully!',
+      });
     } catch (error) {
       console.error('Error clearing cart:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to clear cart. Please try again.',
+      });
     }
   };
 
+  // Calculate total amount
   const totalAmount = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
+  // Loading state
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -142,17 +192,15 @@ const CartScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </LinearGradient>
+
+      {/* Toast Component */}
+      <Toast />
     </SafeAreaView>
   );
 };
 
-interface CartItemCardProps {
-  item: CartItem;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
-}
-
-const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity, onRemoveItem }) => (
+// Memoized CartItemCard with explicit props type
+const CartItemCard: React.FC<CartItemCardProps> = React.memo(({ item, onUpdateQuantity, onRemoveItem }) => (
   <TouchableOpacity onPress={() => handleProductPress(item.productId)}>
     <View className="p-4 border-b border-gray-200">
       <View className="flex-row">
@@ -189,7 +237,7 @@ const CartItemCard: React.FC<CartItemCardProps> = ({ item, onUpdateQuantity, onR
       </View>
     </View>
   </TouchableOpacity>
-);
+));
 
 export default CartScreen;
 

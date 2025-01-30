@@ -6,10 +6,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import "../global.css";
+import Toast from 'react-native-toast-message';
+import '../global.css';
 import GlobalProvider from '@/context/GlobalProvider';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ROUTES } from './routes';
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -30,26 +32,24 @@ export default function RootLayout() {
   }
 
   return (
-<>
-<GlobalProvider>
-      <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-     
-      <Stack.Screen
-            name="(profile)"
-            options={{ headerShown: false }}
-          />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
-
-       
-        
-
-      </Stack>
-      <StatusBar style="auto" />
+    <>
+      <GlobalProvider>
+        {/* ThemeProvider for light/dark mode */}
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(profile)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
       </GlobalProvider>
-      </>
+
+      {/* Toast Component */}
+      <Toast />
+    </>
   );
 }
