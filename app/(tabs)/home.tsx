@@ -1,49 +1,22 @@
-// app/(tabs)/home.tsx
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TextInput, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, TextInput, TouchableOpacity, Dimensions, FlatList, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '../../components/ui/Text';
-import { Card } from '../../components/ui/Card';
+import {  ProductCard,  } from '../../components/customComponents/ProductCardHome';
+import {Text} from "@/components/ui/Text";
+import {Card} from "@/components/ui/Card";
+import {  QuickLink } from '../../components/customComponents/QuickLink';
+import { Section } from '../../components/customComponents/Section';
+import { CategoryCard } from '../../components/customComponents/CategoryCard';
 import { useLocation } from '../../hooks/useLocation';
 import { LocationExpandedView } from '../../components/LocationExpandedView';
 import { router } from 'expo-router';
-import {fetchFeaturedProducts,fetchTopCategories } from "../../lib/fetchProducts";
-import {Product} from "../../types/productTypes"; // impot types of product , structure give by database
+import { fetchFeaturedProducts, fetchTopCategories } from '../../lib/fetchProducts';
+import { Product } from '../../types/productTypes';
 import { Category } from '@/types/categoryTypes';
+import FastImage from 'react-native-fast-image';
+
 const { width } = Dimensions.get('window');
-
-// Types
-interface ProductCardProps {
-  image: { uri: string };
-  name: string;
-  price: string;
-  mrp?: string;
-  discount?: string;
-  weight?: string;
-  large?: boolean;
-  onPress?: () => void;
-}
-
-interface QuickLinkProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  onPress?: () => void;
-}
-
-interface SectionProps {
-  title: string;
-  children: React.ReactNode;
-  showViewAll?: boolean;
-  onViewAll?: () => void;
-}
-
-interface CategoryCardProps {
-  title: string;
-  startingPrice: string;
-  image: { uri: string };
-  onPress?: () => void;
-}
 
 // Constants
 const IMAGES = {
@@ -84,62 +57,39 @@ const BEST_SELLERS = [
   }
 ];
 
-const CATEGORIES = [
-  {
-    id: '1',
-    title: "Fruits & Vegetables",
-    startingPrice: "₹9/kg",
-    image: IMAGES.fruits
-  },
-  {
-    id: '2',
-    title: "Masala & Spices",
-    startingPrice: "₹45/pack",
-    image: IMAGES.masala
-  }
-];
-
 const Home: React.FC = () => {
   const { location, address, loading, error, getLocation } = useLocation();
   const [showLocationExpanded, setShowLocationExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]); // State for featured products
-  const [isLoading, setIsLoading] = useState(true); // Loading state for fetching products
-  const [errorMessage, setErrorMessage] = useState(''); // Error state for fetching products
-
-  const [topCategories, setTopCategories] = useState<Category[]>([]); // for top category
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [topCategories, setTopCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         setIsLoading(true);
-        const products = await fetchFeaturedProducts();
+        const [products, categories] = await Promise.all([
+          fetchFeaturedProducts(),
+          fetchTopCategories(),
+        ]);
         setFeaturedProducts(products);
-       //console.log(products);
+        setTopCategories(categories);
       } catch (error) {
-        setErrorMessage('Failed to fetch products. Please try again.');
+        setErrorMessage('Failed to fetch data. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
-    loadProducts();
+
+    loadData();
   }, []);
 
-  /// use effectt for top categories
-useEffect(() => {
-  const loadTopCategories = async () => {
-    try {
-      const categories = await fetchTopCategories();
-      setTopCategories(categories);
-    } catch (error) {
-      console.error('Error fetching top categories:', error);
-    }
-  };
+  const filteredProducts = featuredProducts.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  loadTopCategories();
-}, []);
-
-  // Render loading or error states
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -190,11 +140,10 @@ useEffect(() => {
   );
 
   const handleProductPress = (productId: string) => {
-    // Navigate to the dynamic product route
     router.push(`/product/${productId}`);
   };
+
   const handleCategoryPress = (categoryId: string) => {
-    // Navigate to the dynamic category route
     router.push(`/category/${categoryId}`);
   };
 
@@ -264,60 +213,61 @@ useEffect(() => {
           showViewAll
           onViewAll={() => console.log('View all best sellers')}
         >
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            className="px-4"
-          >
-            {featuredProducts.map((product) => (
+          <FlatList
+            horizontal
+            data={filteredProducts}
+            keyExtractor={(item) => item.$id}
+            renderItem={({ item }) => (
               <ProductCard
-                key={product.$id}
-                image={{ uri: product.imageUrl }}
-                name={product.name}
-                price={`₹${product.price}`}
-                mrp={product.mrp ? `₹${product.mrp}` : undefined}
-                discount={product.discount ? `${product.discount}% OFF` : undefined}
-                onPress={() => handleProductPress(product.$id)}
+                image={{ uri: item.imageUrl }}
+                name={item.name}
+                price={`₹${item.price}`}
+                mrp={item.mrp ? `₹${item.mrp}` : undefined}
+                discount={item.discount ? `${item.discount}% OFF` : undefined}
+                onPress={() => handleProductPress(item.$id)}
               />
-            ))}
-          </ScrollView>
+            )}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          />
         </Section>
 
         {/* Top Categories */}
         <Section 
-  title="Top Categories"
-  showViewAll
-  onViewAll={() => router.push('/categories')}
->
-  <View className="flex-row flex-wrap justify-between px-4">
-    {topCategories.map((category) => (
-      <CategoryCard
-        key={category.$id}
-        title={category.name}
-        startingPrice="Starting at ₹0" // Add this field to your schema if needed
-        image={{ uri: category.imageUrl }}
-        onPress={() => handleCategoryPress(category.categoryId)}
-      />
-    ))}
-  </View>
-</Section>
+          title="Top Categories"
+          showViewAll
+          onViewAll={() => router.push('/categories')}
+        >
+          <View className="flex-row flex-wrap justify-between px-4">
+            {topCategories.map((category) => (
+              <CategoryCard
+                key={category.$id}
+                title={category.name}
+                startingPrice="Starting at ₹0"
+                image={{ uri: category.imageUrl }}
+                onPress={() => handleCategoryPress(category.categoryId)}
+              />
+            ))}
+          </View>
+        </Section>
 
         {/* Season Essentials */}
         <Section title="Season Essentials">
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            className="px-4 pb-4"
-          >
-            {BEST_SELLERS.map((item) => (
+          <FlatList
+            horizontal
+            data={BEST_SELLERS}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
               <ProductCard
                 key={item.id}
                 {...item}
                 large
                 onPress={() => handleProductPress(item.id)}
               />
-            ))}
-          </ScrollView>
+            )}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          />
         </Section>
       </ScrollView>
 
@@ -336,88 +286,5 @@ useEffect(() => {
     </SafeAreaView>
   );
 };
-
-// Helper Components
-const ProductCard: React.FC<ProductCardProps> = ({ 
-  image, 
-  name, 
-  price, 
-  mrp, 
-  discount, 
-  weight, 
-  large,
-  onPress 
-}) => (
-  <TouchableOpacity 
-    className={`${large ? 'w-64' : 'w-32'} mr-4 bg-white rounded-lg p-2`}
-    activeOpacity={0.7}
-    onPress={onPress}
-  >
-    <Image 
-      source={image} 
-      className="w-full h-32 rounded-lg"
-      resizeMode="cover"
-    />
-    <Text className="font-bold mt-2" numberOfLines={2}>{name}</Text>
-    {weight && <Text className="text-gray-500 text-sm">{weight}</Text>}
-    <View className="flex-row items-center mt-1">
-      <Text className="font-bold text-lg">{price}</Text>
-      {mrp && (
-        <Text className="text-gray-500 line-through ml-2 text-sm">{mrp}</Text>
-      )}
-    </View>
-    {discount && (
-      <View className="bg-red-500 px-2 py-1 rounded absolute top-2 left-2">
-        <Text className="text-white text-xs">{discount}</Text>
-      </View>
-    )}
-  </TouchableOpacity>
-);
-
-const QuickLink: React.FC<QuickLinkProps> = ({ icon, title, onPress }) => (
-  <TouchableOpacity 
-    className="items-center"
-    activeOpacity={0.7}
-    onPress={onPress}
-  >
-    <View className="w-12 h-12 bg-gray-100 rounded-full items-center justify-center">
-      <Ionicons name={icon} size={24} color="#4B5563" />
-    </View>
-    <Text className="text-xs mt-1 text-center">{title}</Text>
-  </TouchableOpacity>
-);
-
-const Section: React.FC<SectionProps> = ({ title, children, showViewAll, onViewAll }) => (
-  <View className="mt-6">
-    <View className="flex-row justify-between items-center px-4 mb-4">
-      <Text className="text-lg font-bold">{title}</Text>
-      {showViewAll && (
-        <TouchableOpacity 
-          activeOpacity={0.7}
-          onPress={onViewAll}
-        >
-          <Text className="text-green-500">View All</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-    {children}
-  </View>
-);
-
-const CategoryCard: React.FC<CategoryCardProps> = ({ title, startingPrice, image, onPress }) => (
-  <TouchableOpacity 
-    className="w-[48%] bg-yellow-50 rounded-lg p-4 mb-4"
-    activeOpacity={0.7}
-    onPress={onPress}
-  >
-    <Image 
-      source={image} 
-      className="w-20 h-20"
-      resizeMode="cover"
-    />
-    <Text className="font-bold mt-2">{title}</Text>
-    <Text className="text-gray-500 text-sm">Starting at {startingPrice}</Text>
-  </TouchableOpacity>
-);
 
 export default Home;

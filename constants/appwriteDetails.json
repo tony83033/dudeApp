@@ -1,43 +1,10 @@
 {
-    "projectId": "6780e3ff00052183da93",
-    "projectName": "dudeApp",
-    "settings": {
-        "services": {
-            "account": true,
-            "avatars": true,
-            "databases": true,
-            "locale": true,
-            "health": true,
-            "storage": true,
-            "teams": true,
-            "users": true,
-            "functions": true,
-            "graphql": true,
-            "messaging": true
-        },
-        "auth": {
-            "methods": {
-                "jwt": true,
-                "phone": true,
-                "invites": true,
-                "anonymous": true,
-                "email-otp": true,
-                "magic-url": true,
-                "email-password": true
-            },
-            "security": {
-                "duration": 31536000,
-                "limit": 0,
-                "sessionsLimit": 10,
-                "passwordHistory": 0,
-                "passwordDictionary": false,
-                "personalDataCheck": false,
-                "sessionAlerts": false,
-                "mockNumbers": []
-            }
-        }
-    },
     "databases": [
+        {
+            "$id": "678d461e00131c8832bd",
+            "name": "My Awesome Database",
+            "enabled": true
+        },
         {
             "$id": "67811767003984166d8d",
             "name": "dude",
@@ -45,6 +12,15 @@
         }
     ],
     "collections": [
+        {
+            "$id": "678d461e0013642a2a06",
+            "databaseId": "678d461e00131c8832bd",
+            "name": "My Awesome Collection",
+            "documentSecurity": false,
+            "attributes": [],
+            "indexes": [],
+            "enabled": true
+        },
         {
             "$id": "678117b5003d84901e25",
             "$permissions": [],
@@ -704,5 +680,43 @@
             ],
             "indexes": []
         }
-    ]
+    ],
+    "projectId": "6780e3ff00052183da93",
+    "projectName": "dudeApp",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": 0,
+                "sessionsLimit": 10,
+                "passwordHistory": 0,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
+    }
 }
