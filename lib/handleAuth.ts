@@ -1,4 +1,5 @@
-import {account} from "./appwrite";
+// lib/handleAuth.ts
+import {account, appwriteConfig,databases} from "./appwrite";
 import {
     Account,
     Avatars,
@@ -8,22 +9,39 @@ import {
     Query,
     Storage,
   } from "react-native-appwrite";
-
-export async function createUser(email:string, password:string) {
+  import { User } from "../types/userTypes";
+  export async function createUser(email: string, password: string, name?: string, phone?: string, profileUrl?: string) {
     try {
+      // Step 1: Create the user account in Appwrite Auth
       const newAccount = await account.create(
-        ID.unique(),
+        ID.unique(), // Unique user ID
         email,
         password
       );
   
-      if (!newAccount) throw Error;
+      if (!newAccount) throw new Error("Account creation failed");
   
-      
+      // Step 2: Prepare user data for the 'users' collection
+      const userData: User = {
+        userId: newAccount.$id, // Use the account ID as the userId
+        email: newAccount.email,
+        name: name || "", // Optional fields
+        phone: phone || "",
+        profileUrl: profileUrl || "",
+        createdAt: new Date().toISOString(), // Current timestamp
+        updatedAt: new Date().toISOString(), // Current timestamp
+      };
   
+      // Step 3: Store user data in the 'users' collection
+      await databases.createDocument(
+        appwriteConfig.databaseId, // Database ID
+        appwriteConfig.userCollectionId, // Collection ID for users
+        ID.unique(), // Unique document ID
+        userData // User data
+      );
+  
+      // Step 4: Sign in the user after account creation
       await signIn(email, password);
-  
-     
   
       return newAccount;
     } catch (error) {

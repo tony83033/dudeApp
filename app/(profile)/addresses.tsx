@@ -9,27 +9,28 @@ import {
 } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { AddressFormModal, AddressFormData } from '../../components/customComponents/AddressesFormModal';
+import { databases} from '../../lib/appwrite';
+import { ID, Query } from "react-native-appwrite";
+import { appwriteConfig } from '../../lib/appwrite';
+import Toast from 'react-native-toast-message';
 
 // Types
 interface Address {
-  id: string;
-  type: 'home' | 'work' | 'other';
-  name: string;
-  phoneNumber: string;
-  address: string;
-  landmark: string;
-  area: string;
+  addressId: string;
+  userId: string;
+  street: string;
   city: string;
   state: string;
-  pincode: string;
+  postalCode: string;
+  country: string;
+  addressDetails: string; // New field
   isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const STORAGE_KEY = 'user_addresses';
 
 export default function AddressesScreen() {
   const { user } = useGlobalContext();
@@ -39,15 +40,13 @@ export default function AddressesScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [formData, setFormData] = useState<AddressFormData>({
-    type: 'home',
-    name: user?.name || '',
-    phoneNumber: user?.phone || '',
-    address: '',
-    landmark: '',
-    area: '',
+    street: '',
     city: '',
     state: '',
-    pincode: '',
+    postalCode: '',
+    country: '',
+    addressDetails: '', // New field
+    isDefault: false,
   });
 
   useEffect(() => {
@@ -57,12 +56,34 @@ export default function AddressesScreen() {
   const loadAddresses = async () => {
     setIsLoading(true);
     try {
-      const savedAddresses = await AsyncStorage.getItem(STORAGE_KEY);
-      if (savedAddresses) {
-        setAddresses(JSON.parse(savedAddresses));
-      }
+      const response = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.addressesCollectionId,
+        [Query.equal('userId', user?.$id || '')]
+      );
+
+      const addresses: Address[] = response.documents.map((doc) => ({
+        addressId: doc.addressId,
+        userId: doc.userId,
+        street: doc.street,
+        city: doc.city,
+        state: doc.state,
+        postalCode: doc.postalCode,
+        country: doc.country,
+        addressDetails: doc.addressDetails, // New field
+        isDefault: doc.isDefault,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      }));
+
+      setAddresses(addresses);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load addresses');
+      console.log("erro in loading address",error)
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load addresses',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +94,11 @@ export default function AddressesScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Please allow location access to auto-detect your address');
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Denied',
+          text2: 'Please allow location access to auto-detect your address',
+        });
         return;
       }
 
@@ -84,53 +109,76 @@ export default function AddressesScreen() {
       });
 
       if (addressDetails) {
+        const fullAddress = [
+          addressDetails.street,
+          addressDetails.district,
+          addressDetails.subregion,
+          addressDetails.city,
+          addressDetails.region,
+          addressDetails.country,
+          addressDetails.postalCode,
+        ].filter(Boolean).join(', ');
+
         setFormData(prev => ({
           ...prev,
-          address: [
-            addressDetails.street,
-            addressDetails.district,
-            addressDetails.subregion,
-          ].filter(Boolean).join(', '),
-          area: addressDetails.district || addressDetails.subregion || '',
+          street: addressDetails.street || '',
           city: addressDetails.city || '',
           state: addressDetails.region || '',
-          pincode: addressDetails.postalCode || '',
+          postalCode: addressDetails.postalCode || '',
+          country: addressDetails.country || '',
+          addressDetails: fullAddress, // Populate addressDetails
         }));
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to detect location');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to detect location',
+      });
     } finally {
       setIsLocationLoading(false);
     }
   };
 
   const validateForm = (): boolean => {
-    if (!formData.name.trim()) {
-      Alert.alert('Error', 'Please enter your name');
-      return false;
-    }
-    if (!formData.phoneNumber.trim() || !/^\d{10}$/.test(formData.phoneNumber)) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
-      return false;
-    }
-    if (!formData.address.trim()) {
-      Alert.alert('Error', 'Please enter your address');
-      return false;
-    }
-    if (!formData.area.trim()) {
-      Alert.alert('Error', 'Please enter your area');
-      return false;
-    }
-    if (!formData.pincode.trim() || !/^\d{6}$/.test(formData.pincode)) {
-      Alert.alert('Error', 'Please enter a valid 6-digit pincode');
+    if (!formData.street.trim()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter your street address',
+      });
       return false;
     }
     if (!formData.city.trim()) {
-      Alert.alert('Error', 'Please enter your city');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter your city',
+      });
       return false;
     }
     if (!formData.state.trim()) {
-      Alert.alert('Error', 'Please enter your state');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter your state',
+      });
+      return false;
+    }
+    if (!formData.postalCode.trim() || !/^\d{6}$/.test(formData.postalCode)) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter a valid 6-digit postal code',
+      });
+      return false;
+    }
+    if (!formData.country.trim()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter your country',
+      });
       return false;
     }
     return true;
@@ -139,75 +187,87 @@ export default function AddressesScreen() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    const newAddresses = [...addresses];
-    
-    if (editingAddress) {
-      const index = newAddresses.findIndex(addr => addr.id === editingAddress.id);
-      if (index !== -1) {
-        newAddresses[index] = {
-          ...editingAddress,
-          ...formData,
-        };
-      }
-    } else {
-      const newAddress: Address = {
-        id: Date.now().toString(),
-        ...formData,
-        isDefault: addresses.length === 0,
-      };
-      newAddresses.push(newAddress);
-    }
+    const addressData = {
+      userId: user?.$id || '',
+      street: formData.street,
+      city: formData.city,
+      state: formData.state,
+      postalCode: formData.postalCode,
+      country: formData.country,
+      addressDetails: formData.addressDetails, // Include addressDetails
+      isDefault: formData.isDefault,
+    };
 
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newAddresses));
-      setAddresses(newAddresses);
+      if (editingAddress) {
+        await databases.updateDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.addressesCollectionId,
+          editingAddress.addressId,
+          addressData
+        );
+      } else {
+        await databases.createDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.addressesCollectionId,
+          ID.unique(),
+          addressData
+        );
+      }
+
+      await loadAddresses();
       setIsModalVisible(false);
       resetForm();
     } catch (error) {
-      Alert.alert('Error', 'Failed to save address');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to save address',
+      });
     }
   };
 
   const resetForm = () => {
     setFormData({
-      type: 'home',
-      name: user?.name || '',
-      phoneNumber: user?.phone || '',
-      address: '',
-      landmark: '',
-      area: '',
+      street: '',
       city: '',
       state: '',
-      pincode: '',
+      postalCode: '',
+      country: '',
+      addressDetails: '', // Reset addressDetails
+      isDefault: false,
     });
     setEditingAddress(null);
   };
 
   const handleSetDefault = async (addressId: string) => {
-    const newAddresses = addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === addressId,
-    }));
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newAddresses));
-      setAddresses(newAddresses);
+      await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.addressesCollectionId,
+        addressId,
+        { isDefault: true }
+      );
+      await loadAddresses();
     } catch (error) {
-      Alert.alert('Error', 'Failed to set default address');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to set default address',
+      });
     }
   };
 
   const handleEditAddress = (address: Address) => {
     setEditingAddress(address);
     setFormData({
-      type: address.type,
-      name: address.name,
-      phoneNumber: address.phoneNumber,
-      address: address.address,
-      landmark: address.landmark,
-      area: address.area,
+      street: address.street,
       city: address.city,
       state: address.state,
-      pincode: address.pincode,
+      postalCode: address.postalCode,
+      country: address.country,
+      addressDetails: address.addressDetails, // Include addressDetails
+      isDefault: address.isDefault,
     });
     setIsModalVisible(true);
   };
@@ -223,11 +283,18 @@ export default function AddressesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const newAddresses = addresses.filter(addr => addr.id !== addressId);
-              await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newAddresses));
-              setAddresses(newAddresses);
+              await databases.deleteDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.addressesCollectionId,
+                addressId
+              );
+              await loadAddresses();
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete address');
+              Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to delete address',
+              });
             }
           },
         },
@@ -239,19 +306,14 @@ export default function AddressesScreen() {
     <View className="bg-white p-4 mb-2 rounded-lg shadow-sm">
       <View className="flex-row justify-between items-center mb-2">
         <View className="flex-row items-center">
-          <Ionicons 
-            name={item.type === 'home' ? 'home' : item.type === 'work' ? 'business' : 'location'} 
-            size={24} 
-            color="#4B5563" 
-          />
           <Text className="font-bold ml-2">
-            {item.type.toUpperCase()}
+            {item.isDefault ? 'Default Address' : 'Address'}
           </Text>
         </View>
         <View className="flex-row items-center">
           {!item.isDefault && (
             <TouchableOpacity 
-              onPress={() => handleSetDefault(item.id)}
+              onPress={() => handleSetDefault(item.addressId)}
               className="mr-2"
             >
               <Text className="text-green-600 text-sm">Set as Default</Text>
@@ -266,18 +328,13 @@ export default function AddressesScreen() {
       </View>
 
       <View className="mb-2">
-        <Text className="font-bold text-gray-800">{item.name}</Text>
-        <Text className="text-gray-600">{item.phoneNumber}</Text>
-      </View>
-
-      <View className="mb-2">
-        <Text className="text-gray-600">{item.address}</Text>
-        {item.landmark && (
-          <Text className="text-gray-600">Landmark: {item.landmark}</Text>
-        )}
+        <Text className="text-gray-600">{item.street}</Text>
         <Text className="text-gray-600">
-          {item.area}, {item.city}, {item.state} - {item.pincode}
+          {item.city}, {item.state}, {item.country} - {item.postalCode}
         </Text>
+        {item.addressDetails && (
+          <Text className="text-gray-600">Details: {item.addressDetails}</Text>
+        )}
       </View>
 
       <View className="flex-row mt-3 pt-3 border-t border-gray-100">
@@ -290,7 +347,7 @@ export default function AddressesScreen() {
         </TouchableOpacity>
         <TouchableOpacity 
           className="flex-row items-center"
-          onPress={() => handleDeleteAddress(item.id)}
+          onPress={() => handleDeleteAddress(item.addressId)}
         >
           <Ionicons name="trash" size={20} color="#EF4444" />
           <Text className="ml-1 text-red-500">Delete</Text>
@@ -309,7 +366,7 @@ export default function AddressesScreen() {
         <FlatList
           data={addresses}
           renderItem={renderAddress}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.addressId}
           contentContainerClassName="p-4"
           ListEmptyComponent={() => (
             <View className="p-4 items-center">
@@ -343,6 +400,8 @@ export default function AddressesScreen() {
         isLocationLoading={isLocationLoading}
         onDetectLocation={detectCurrentLocation}
       />
+
+      <Toast />
     </View>
   );
 }

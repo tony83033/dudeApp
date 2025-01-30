@@ -1,3 +1,4 @@
+// lib/appwrite.ts
 import {
     Account,
     Avatars,
