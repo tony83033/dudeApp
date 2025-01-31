@@ -1,4 +1,6 @@
-// /app/(tabs)/cart.tsx
+
+
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +13,7 @@ import { fetchCart, updateCart, removeFromCart, clearCart } from '../../lib/hand
 import { useGlobalContext } from '@/context/GlobalProvider';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface CartItem {
   productId: string;
@@ -20,7 +23,6 @@ interface CartItem {
   imageUrl: string;
 }
 
-// Define CartItemCardProps interface
 interface CartItemCardProps {
   item: CartItem;
   onUpdateQuantity: (productId: string, quantity: number) => Promise<void>;
@@ -33,37 +35,48 @@ const CartScreen: React.FC = () => {
 
   const { user } = useGlobalContext();
 
-  // Fetch cart items
-  useEffect(() => {
-    const loadCart = async () => {
-      try {
-        const userId = user?.$id.toString();
-        const cart = await fetchCart(userId || '');
-        setCartItems(cart.items);
-      } catch (error) {
-        console.error('Error fetching cart:', error);
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to load cart. Please try again.',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadCart = async () => {
+    try {
+      const userId = user?.$id.toString();
+      const cart = await fetchCart(userId || '');
+      setCartItems(cart.items || []);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load cart. Please try again.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Initial load
+  useEffect(() => {
     loadCart();
   }, [user]);
 
-  // Update quantity
+  // Refresh cart on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCart();
+    }, [user])
+  );
+
   const updateQuantity = async (productId: string, newQuantity: number) => {
     try {
+      if (newQuantity === 0) {
+        await handleRemoveItem(productId);
+        return;
+      }
+
       const userId = user?.$id.toString();
       const updatedItems = cartItems.map(item =>
         item.productId === productId ? { ...item, quantity: newQuantity } : item
       );
       await updateCart(userId || '', updatedItems);
-      setCartItems(updatedItems);
+      await loadCart(); // Refresh cart data
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -79,13 +92,11 @@ const CartScreen: React.FC = () => {
     }
   };
 
-  // Remove item
   const handleRemoveItem = async (productId: string) => {
     try {
       const userId = user?.$id.toString();
       await removeFromCart(userId || '', productId);
-      const updatedItems = cartItems.filter(item => item.productId !== productId);
-      setCartItems(updatedItems);
+      await loadCart(); // Refresh cart data
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -101,12 +112,11 @@ const CartScreen: React.FC = () => {
     }
   };
 
-  // Clear cart
   const handleClearCart = async () => {
     try {
       const userId = user?.$id.toString();
       await clearCart(userId || '');
-      setCartItems([]);
+      await loadCart(); // Refresh cart data
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -122,13 +132,22 @@ const CartScreen: React.FC = () => {
     }
   };
 
-  // Calculate total amount
   const totalAmount = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  // Loading state
+  const renderHeader = () => (
+    <View className="p-4 border-b border-gray-200 shadow-sm">
+      <View className="flex-row items-center">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text className="text-xl font-bold ml-4">Shopping Cart</Text>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -141,106 +160,105 @@ const CartScreen: React.FC = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <LinearGradient
-        colors={['#FFFFFF', '#F3F4F6']}
-        className="flex-1"
-      >
-        {/* Header */}
-        <View className="p-4 border-b border-gray-200 shadow-sm">
-          <View className="flex-row items-center">
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
-            <Text className="text-xl font-bold ml-4">Shopping Cart</Text>
+      <LinearGradient colors={['#FFFFFF', '#F3F4F6']} className="flex-1">
+        {renderHeader()}
+
+        {cartItems.length === 0 ? (
+          // Empty Cart View
+          <View className="flex-1 items-center justify-center p-4">
+            <Ionicons name="cart-outline" size={80} color="#CBD5E0" />
+            <Text className="text-xl font-bold mt-4 text-gray-700">
+              Your cart is empty
+            </Text>
+            <Text className="text-gray-500 text-center mt-2 mb-6">
+              Looks like you haven't added anything to your cart yet
+            </Text>
+            <Button onPress={() => router.push('/home')} className="bg-blue-500 px-8">
+              Start Shopping
+            </Button>
           </View>
-        </View>
+        ) : (
+          // Cart Items View
+          <>
+            <ScrollView className="flex-1">
+              {cartItems.map(item => (
+                <CartItemCard
+                  key={item.productId}
+                  item={item}
+                  onUpdateQuantity={updateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                />
+              ))}
+            </ScrollView>
 
-        {/* Cart Items */}
-        <ScrollView className="flex-1">
-          {cartItems.map(item => (
-            <CartItemCard
-              key={item.productId}
-              item={item}
-              onUpdateQuantity={updateQuantity}
-              onRemoveItem={handleRemoveItem}
-            />
-          ))}
-
-          {/* Offers Section */}
-          <Card className="m-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50">
-            <Text className="font-bold mb-2">Available Offers</Text>
-            <View className="flex-row items-center">
-              <Ionicons name="pricetag" size={20} color="#22C55E" />
-              <Text className="ml-2 text-gray-600">
-                Get 10% off on orders above ₹500
-              </Text>
+            {/* Bottom Sheet */}
+            <View className="border-t border-gray-200 p-4 bg-white">
+              <View className="flex-row justify-between mb-4">
+                <Text className="text-gray-600">Total Amount</Text>
+                <Text className="font-bold">₹{totalAmount}</Text>
+              </View>
+              <Button
+                onPress={() => console.log('Proceed to checkout')}
+                className="bg-blue-500"
+              >
+                Proceed to Checkout
+              </Button>
+              <TouchableOpacity onPress={handleClearCart} className="mt-2">
+                <Text className="text-red-500 text-center">Clear Cart</Text>
+              </TouchableOpacity>
             </View>
-          </Card>
-        </ScrollView>
+          </>
+        )}
 
-        {/* Bottom Sheet */}
-        <View className="border-t border-gray-200 p-4 bg-white">
-          <View className="flex-row justify-between mb-4">
-            <Text className="text-gray-600">Total Amount</Text>
-            <Text className="font-bold">₹{totalAmount}</Text>
-          </View>
-          <Button onPress={() => console.log('Proceed to checkout')} className="bg-blue-500">
-            Proceed to Checkout
-          </Button>
-          <TouchableOpacity onPress={handleClearCart} className="mt-2">
-            <Text className="text-red-500 text-center">Clear Cart</Text>
-          </TouchableOpacity>
-        </View>
+        <Toast />
       </LinearGradient>
-
-      {/* Toast Component */}
-      <Toast />
     </SafeAreaView>
   );
 };
 
-// Memoized CartItemCard with explicit props type
-const CartItemCard: React.FC<CartItemCardProps> = React.memo(({ item, onUpdateQuantity, onRemoveItem }) => (
-  <TouchableOpacity onPress={() => handleProductPress(item.productId)}>
-    <View className="p-4 border-b border-gray-200">
-      <View className="flex-row">
-        <Image source={{ uri: item.imageUrl }} className="w-24 h-24 rounded-lg" />
-        <View className="flex-1 ml-4">
-          <Text className="font-medium text-lg">{item.name}</Text>
-          <Text className="text-gray-600 mt-1">₹{item.price}</Text>
-          
-          {/* Quantity Controls */}
-          <View className="flex-row items-center mt-2">
+const CartItemCard: React.FC<CartItemCardProps> = React.memo(
+  ({ item, onUpdateQuantity, onRemoveItem }) => (
+    <TouchableOpacity onPress={() => handleProductPress(item.productId)}>
+      <View className="p-4 border-b border-gray-200">
+        <View className="flex-row">
+          <Image source={{ uri: item.imageUrl }} className="w-24 h-24 rounded-lg" />
+          <View className="flex-1 ml-4">
+            <Text className="font-medium text-lg">{item.name}</Text>
+            <Text className="text-gray-600 mt-1">₹{item.price}</Text>
+
+            {/* Quantity Controls */}
+            <View className="flex-row items-center mt-2">
+              <TouchableOpacity
+                onPress={() => onUpdateQuantity(item.productId, Math.max(0, item.quantity - 1))}
+                className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+              >
+                <Ionicons name="remove" size={20} color="black" />
+              </TouchableOpacity>
+              <Text className="mx-4">{item.quantity}</Text>
+              <TouchableOpacity
+                onPress={() => onUpdateQuantity(item.productId, item.quantity + 1)}
+                className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+              >
+                <Ionicons name="add" size={20} color="black" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Remove Button */}
             <TouchableOpacity
-              onPress={() => onUpdateQuantity(item.productId, Math.max(0, item.quantity - 1))}
-              className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
+              onPress={() => onRemoveItem(item.productId)}
+              className="mt-2"
             >
-              <Ionicons name="remove" size={20} color="black" />
-            </TouchableOpacity>
-            <Text className="mx-4">{item.quantity}</Text>
-            <TouchableOpacity
-              onPress={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-              className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
-            >
-              <Ionicons name="add" size={20} color="black" />
+              <Ionicons name="trash" size={20} color="#EF4444" />
             </TouchableOpacity>
           </View>
-
-          {/* Remove Button */}
-          <TouchableOpacity
-            onPress={() => onRemoveItem(item.productId)}
-            className="mt-2"
-          >
-            <Ionicons name="trash" size={20} color="#EF4444" />
-          </TouchableOpacity>
         </View>
       </View>
-    </View>
-  </TouchableOpacity>
-));
-
-export default CartScreen;
+    </TouchableOpacity>
+  )
+);
 
 function handleProductPress(productId: string): void {
   router.push(`/product/${productId}`);
 }
+
+export default CartScreen;

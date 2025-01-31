@@ -14,7 +14,7 @@ const Welcome = () => {
     <SafeAreaView className="flex-1">
       {/* Gradient Background */}
       <LinearGradient
-        colors={["#6EE7B7", "#3B82F6"]} 
+        colors={["#FFB6C1", "#3B82F6"]} 
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className="flex-1 justify-center items-center"
@@ -29,7 +29,7 @@ const Welcome = () => {
 
           {/* Welcome Message */}
           <Text className="text-white text-4xl font-bold text-center mb-4">
-            Welcome to Dude!
+            Welcome to Ratna!
           </Text>
           <Text className="text-white text-lg text-center mb-8">
             Your one-stop destination to buy and sell anything. Discover amazing deals and connect with sellers worldwide.

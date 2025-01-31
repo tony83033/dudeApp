@@ -1,67 +1,84 @@
+
+
+
+
+
+
+
+
+
+
+
+
 import { appwriteConfig } from "./appwrite";
 import { ID, Query } from "react-native-appwrite";
 import { databases } from "./appwrite";
 
-export const addToCart = async (userId: string, productId: string, quantity: number, price: number,imageUrl:string,name:string) => {
+interface CartItem {
+  productId: string;
+  quantity: number;
+  price: number;
+  imageUrl: string;
+  name: string;
+}
+
+export const addToCart = async (
+  userId: string, 
+  productId: string, 
+  quantity: number, 
+  price: number,
+  imageUrl: string,
+  name: string
+) => {
   try {
+    if (!userId) throw new Error('User ID is required');
+
     const response = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.cartsCollectionId,
       [Query.equal('userId', userId)]
     );
 
-    // Serialize the new item as a string
-    const newItem = JSON.stringify({ productId, quantity, price,imageUrl ,name});
+    const newItem = JSON.stringify({ productId, quantity, price, imageUrl, name });
 
     if (response.documents.length > 0) {
       const cart = response.documents[0];
-      let items = cart.items || []; // Ensure items is an array
+      let items = cart.items || [];
 
-      // Check if the cart is full
       if (items.length >= 100) {
         throw new Error('Cart is full. Please remove some items before adding more.');
       }
 
-      // Check if the product already exists in the cart
-    interface CartItem {
-      productId: string;
-      quantity: number;
-      price: number;
-      imageUrl:string;
-      name:string;
-
-    }
-
-    const existingItemIndex: number = items.findIndex((item: string): boolean => {
-      const parsedItem: CartItem = JSON.parse(item);
-      return parsedItem.productId === productId;
-    });
+      const existingItemIndex = items.findIndex((item: string) => {
+        const parsedItem: CartItem = JSON.parse(item);
+        return parsedItem.productId === productId;
+      });
 
       if (existingItemIndex !== -1) {
-        // Update quantity for existing item
-        const existingItem = JSON.parse(items[existingItemIndex]);
+        const existingItem: CartItem = JSON.parse(items[existingItemIndex]);
         existingItem.quantity += quantity;
         items[existingItemIndex] = JSON.stringify(existingItem);
       } else {
-        // Add new item to the cart
         items.push(newItem);
       }
 
-      await databases.updateDocument(
+      return await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.cartsCollectionId,
         cart.$id,
-        { items, updatedAt: new Date().toISOString() }
+        { 
+          items, 
+          updatedAt: new Date().toISOString() 
+        }
       );
     } else {
-      // Create a new cart
-      await databases.createDocument(
+      return await databases.createDocument(
         appwriteConfig.databaseId,
         appwriteConfig.cartsCollectionId,
         ID.unique(),
         {
           userId,
-          items: [newItem], // Store as an array of strings
+          items: [newItem],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -73,10 +90,10 @@ export const addToCart = async (userId: string, productId: string, quantity: num
   }
 };
 
-
-
 export const fetchCart = async (userId: string) => {
   try {
+    if (!userId) throw new Error('User ID is required');
+
     const response = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.cartsCollectionId,
@@ -86,15 +103,21 @@ export const fetchCart = async (userId: string) => {
     if (response.documents.length > 0) {
       const cart = response.documents[0];
       const items = cart.items.map((item: string) => {
-        const parsedItem = JSON.parse(item);
-        return {
-          productId: parsedItem.productId,
-          name: parsedItem.name, // Include name
-          price: parsedItem.price,
-          quantity: parsedItem.quantity,
-          imageUrl: parsedItem.imageUrl, // Include imageUrl
-        };
-      });
+        try {
+          const parsedItem = JSON.parse(item);
+          return {
+            productId: parsedItem.productId,
+            name: parsedItem.name,
+            price: parsedItem.price,
+            quantity: parsedItem.quantity,
+            imageUrl: parsedItem.imageUrl,
+          };
+        } catch (e) {
+          console.error('Error parsing cart item:', e);
+          return null;
+        }
+      }).filter(Boolean); // Remove any null items from parsing errors
+
       return { items, updatedAt: cart.updatedAt };
     }
     return { items: [], updatedAt: null };
@@ -104,10 +127,13 @@ export const fetchCart = async (userId: string) => {
   }
 };
 
-
-
-export const updateCart = async (userId: string, items: Array<{ productId: string, quantity: number, price: number }>) => {
+export const updateCart = async (
+  userId: string, 
+  items: CartItem[]
+) => {
   try {
+    if (!userId) throw new Error('User ID is required');
+
     const response = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.cartsCollectionId,
@@ -116,12 +142,29 @@ export const updateCart = async (userId: string, items: Array<{ productId: strin
 
     if (response.documents.length > 0) {
       const cartId = response.documents[0].$id;
-      const serializedItems = items.map(item => JSON.stringify(item)); // Serialize each item
-      await databases.updateDocument(
+      const serializedItems = items.map(item => JSON.stringify(item));
+      
+      return await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.cartsCollectionId,
         cartId,
-        { items: serializedItems, updatedAt: new Date().toISOString() }
+        { 
+          items: serializedItems, 
+          updatedAt: new Date().toISOString() 
+        }
+      );
+    } else {
+      // Create new cart if it doesn't exist
+      return await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.cartsCollectionId,
+        ID.unique(),
+        {
+          userId,
+          items: items.map(item => JSON.stringify(item)),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
       );
     }
   } catch (error) {
@@ -130,13 +173,10 @@ export const updateCart = async (userId: string, items: Array<{ productId: strin
   }
 };
 
-
-
-
-
 export const removeFromCart = async (userId: string, productId: string) => {
   try {
-    // Fetch the user's cart
+    if (!userId || !productId) throw new Error('User ID and Product ID are required');
+
     const response = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.cartsCollectionId,
@@ -146,26 +186,19 @@ export const removeFromCart = async (userId: string, productId: string) => {
     if (response.documents.length > 0) {
       const cart = response.documents[0];
       
-      // Filter out the item with the specified productId
-      interface CartItemRemove {
-        productId: string;
-        quantity: number;
-        price: number;
-        imageUrl: string;
-        name: string;
-      }
-
-      const updatedItems: string[] = cart.items.filter((item: string) => {
-        const parsedItem: CartItemRemove = JSON.parse(item); // Parse the JSON string
-        return parsedItem.productId !== productId; // Keep items that don't match the productId
+      const updatedItems = cart.items.filter((item: string) => {
+        const parsedItem: CartItem = JSON.parse(item);
+        return parsedItem.productId !== productId;
       });
 
-      // Update the cart with the remaining items
-      await databases.updateDocument(
+      return await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.cartsCollectionId,
         cart.$id,
-        { items: updatedItems, updatedAt: new Date().toISOString() }
+        { 
+          items: updatedItems, 
+          updatedAt: new Date().toISOString() 
+        }
       );
     }
   } catch (error) {
@@ -174,11 +207,10 @@ export const removeFromCart = async (userId: string, productId: string) => {
   }
 };
 
-
-
-
 export const clearCart = async (userId: string) => {
   try {
+    if (!userId) throw new Error('User ID is required');
+
     const response = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.cartsCollectionId,
@@ -187,11 +219,14 @@ export const clearCart = async (userId: string) => {
 
     if (response.documents.length > 0) {
       const cartId = response.documents[0].$id;
-      await databases.updateDocument(
+      return await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.cartsCollectionId,
         cartId,
-        { items: [], updatedAt: new Date().toISOString() } // Clear the items array
+        { 
+          items: [], 
+          updatedAt: new Date().toISOString() 
+        }
       );
     }
   } catch (error) {
