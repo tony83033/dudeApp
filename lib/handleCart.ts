@@ -60,8 +60,7 @@ export const addToCart = async (userId: string, productId: string, quantity: num
         appwriteConfig.cartsCollectionId,
         ID.unique(),
         {
-          userId,
-          items: [newItem], // Store as an array of strings
+          ProductId:productId, // Store as an array of strings
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }

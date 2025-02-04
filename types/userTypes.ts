@@ -1,10 +1,13 @@
-// types/userTypes.ts
 export interface User {
-    userId: string; // Matches the 'userId' attribute in your collection
-    email: string; // Matches the 'email' attribute
-    name?: string; // Optional, matches the 'name' attribute
-    phone?: string; // Optional, matches the 'phone' attribute
-    profileUrl?: string; // Optional, matches the 'profileUrl' attribute
-    createdAt: string; // Matches the 'createdAt' attribute
-    updatedAt: string; // Matches the 'updatedAt' attribute
-  }
+  userId: string; // Unique user ID from Appwrite Auth
+  email: string; // User's email
+  name: string; // Full name
+  phone: string; // Phone number
+  retailCode: String; // Retailer-specific code
+  address: string; // User's address
+  shopName: string; // Name of the shop
+  password: string; // Unique password (required for validation)
+  profileUrl?: string; // Optional profile image URL
+  createdAt: string; // Timestamp when the user was created
+  updatedAt: string; // Timestamp when the user was last updated
+}

@@ -175,25 +175,7 @@ const Home: React.FC = () => {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Banner */}
-        <View className="p-4">
-          <Card className="bg-yellow-50 p-4 rounded-lg">
-            <Text className="text-lg font-bold">LOWEST PRICES IN JAIPUR</Text>
-            <View className="flex-row mt-4 justify-between">
-              <ProductCard
-                image={IMAGES.sugar}
-                name="Sugar"
-                price="₹51/kg"
-                onPress={() => handleProductPress('sugar')}
-              />
-              <ProductCard
-                image={IMAGES.salt}
-                name="Salt"
-                price="₹9/kg"
-                onPress={() => handleProductPress('salt')}
-              />
-            </View>
-          </Card>
-        </View>
+      {/* to do render product of the day */}
 
         {/* Quick Links */}
         <View className="flex-row justify-between px-4 py-2">

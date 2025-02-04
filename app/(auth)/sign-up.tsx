@@ -26,13 +26,39 @@ const SignUp = () => {
   // State for form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [retailCode, setRetailCode] = useState('');
+  const [address, setAddress] = useState('');
+  const [shopName, setShopName] = useState('');
+
+  // Validate password to ensure it's exactly 8 digits
+  const validatePassword = (password: string) => {
+    const isValidLength = password.length === 8; // Check if password is exactly 8 digits
+
+    if (!isValidLength || isNaN(Number(password))) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Password must be exactly 8 digits long',
+      });
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSignup = async () => {
-    // Validate inputs
-    if (email === '' || password === '' || confirmPassword === '' || name === '' || phone === '') {
+    // Validate all fields
+    if (
+      name === '' ||
+      phone === '' ||
+      email === '' ||
+      password === '' ||
+      retailCode === '' ||
+      address === '' ||
+      shopName === ''
+    ) {
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -41,19 +67,22 @@ const SignUp = () => {
       return;
     }
 
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Passwords do not match',
-      });
+    // Validate password
+    if (!validatePassword(password)) {
       return;
     }
 
     try {
-      // Create user with name and phone
-      const result = await createUser(email, password, name, phone);
+      // Create user with all fields
+      const result = await createUser({
+        email,
+        password,
+        name,
+        phone,
+        retailCode,
+        address,
+        shopName,
+      });
       setUser(result);
       setIsLogged(true);
 
@@ -68,6 +97,7 @@ const SignUp = () => {
       router.replace('/home');
     } catch (error) {
       // Show error toast
+      console.log(error)
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -137,24 +167,46 @@ const SignUp = () => {
                 <Text className="text-sm font-medium mb-1 text-gray-700">Password</Text>
                 <TextInput
                   className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200"
-                  placeholder="Enter your password"
+                  placeholder="Enter your password (exactly 8 digits)"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
-                  autoCapitalize="none"
+                  keyboardType="numeric"
+                  maxLength={8} // Restrict to 8 digits
                 />
               </View>
 
-              {/* Confirm Password Input */}
+              {/* Retail Code Input */}
               <View>
-                <Text className="text-sm font-medium mb-1 text-gray-700">Confirm Password</Text>
+                <Text className="text-sm font-medium mb-1 text-gray-700">Retail Code</Text>
                 <TextInput
                   className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200"
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry
-                  autoCapitalize="none"
+                  placeholder="Enter your retail code"
+                  value={retailCode}
+                  onChangeText={setRetailCode}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {/* Address Input */}
+              <View>
+                <Text className="text-sm font-medium mb-1 text-gray-700">Address</Text>
+                <TextInput
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200"
+                  placeholder="Enter your address"
+                  value={address}
+                  onChangeText={setAddress}
+                />
+              </View>
+
+              {/* Shop Name Input */}
+              <View>
+                <Text className="text-sm font-medium mb-1 text-gray-700">Shop Name</Text>
+                <TextInput
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200"
+                  placeholder="Enter your shop name"
+                  value={shopName}
+                  onChangeText={setShopName}
                 />
               </View>
 
