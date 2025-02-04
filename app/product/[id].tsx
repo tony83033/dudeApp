@@ -1,3 +1,15 @@
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -7,17 +19,40 @@ import { Button } from '../../components/ui/Button';
 import { fetchProductsById, fetchProductsByCategoryId } from '../../lib/fetchProducts';
 import { Product } from '../../types/productTypes';
 import ProductCard from '../../components/customComponents/ProductCard';
-import { addToCart } from '../../lib/handleCart';
+import { addToCart, fetchCart } from '../../lib/handleCart';
 import { useGlobalContext } from '@/context/GlobalProvider';
 
+
+
+interface CartItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+}
+
 const ProductScreen = () => {
-  const { id } = useLocalSearchParams(); // Get the product ID from the route
-  const [product, setProduct] = useState<Product | null>(null); // State for product details
-  const [isProductLoading, setIsProductLoading] = useState(true); // Loading state for product
-  const [isRelatedLoading, setIsRelatedLoading] = useState(false); // Loading state for related products
-  const [error, setError] = useState(''); // Error state
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]); // State for related products
-  const { user } = useGlobalContext(); // Get current user
+  const { id } = useLocalSearchParams();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isProductLoading, setIsProductLoading] = useState(true);
+  const [isRelatedLoading, setIsRelatedLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isInCart, setIsInCart] = useState(false);
+  const { user } = useGlobalContext();
+
+  // Check if product is in cart
+  const checkIfInCart = async () => {
+    if (!user || !product) return;
+    try {
+      const cart = await fetchCart(user.$id);
+      const isItemInCart = cart.items.some((item: CartItem) => item.productId === id);
+      setIsInCart(isItemInCart);
+    } catch (error) {
+      console.error('Error checking cart:', error);
+    }
+  };
 
   // Fetch product details
   useEffect(() => {
@@ -41,6 +76,11 @@ const ProductScreen = () => {
     loadProduct();
   }, [id]);
 
+  // Check cart when product loads or changes
+  useEffect(() => {
+    checkIfInCart();
+  }, [product, user]);
+
   // Fetch related products
   useEffect(() => {
     const loadRelatedProducts = async () => {
@@ -49,7 +89,9 @@ const ProductScreen = () => {
       try {
         setIsRelatedLoading(true);
         const products = await fetchProductsByCategoryId(product.categoryId);
-        setRelatedProducts(products);
+        // Filter out the current product from related products
+        const filteredProducts = products.filter(p => p.$id !== product.$id);
+        setRelatedProducts(filteredProducts);
       } catch (error) {
         console.error('Failed to fetch related products:', error);
         Toast.show({
@@ -65,12 +107,6 @@ const ProductScreen = () => {
     loadRelatedProducts();
   }, [product]);
 
-  // Handle product press
-  const handleProductPress = (productId: string) => {
-    router.push(`/product/${productId}`);
-  };
-
-  // Handle add to cart
   const handleAddToCart = async () => {
     if (!user) {
       Toast.show({
@@ -83,6 +119,7 @@ const ProductScreen = () => {
 
     try {
       await addToCart(user.$id, product!.$id, 1, product!.price, product!.imageUrl, product!.name);
+      setIsInCart(true);
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -98,10 +135,21 @@ const ProductScreen = () => {
     }
   };
 
-  // Memoize related products to avoid unnecessary re-renders
+  const handleCartAction = () => {
+    if (isInCart) {
+      router.push('/cart');
+    } else {
+      handleAddToCart();
+    }
+  };
+
+  const handleProductPress = (productId: string) => {
+    router.push(`/product/${productId}`);
+  };
+
+  // Memoize related products
   const memoizedRelatedProducts = useMemo(() => relatedProducts, [relatedProducts]);
 
-  // Render loading state
   if (isProductLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -110,7 +158,6 @@ const ProductScreen = () => {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -119,7 +166,6 @@ const ProductScreen = () => {
     );
   }
 
-  // Render product details
   if (!product) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -170,35 +216,47 @@ const ProductScreen = () => {
           <Text className="text-gray-600">{product.description}</Text>
         </View>
 
-        {/* Add to Cart Button */}
+        {/* Add to Cart/Go to Cart Button */}
         <Button
-          onPress={handleAddToCart}
-          className="mt-6"
+          onPress={handleCartAction}
+          className={`mt-6 ${isInCart ? 'bg-green-500' : 'bg-blue-500'}`}
           disabled={product.stock <= 0}
           accessibilityRole="button"
-          accessibilityLabel={product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+          accessibilityLabel={
+            product.stock <= 0 
+              ? 'Out of Stock' 
+              : isInCart 
+                ? 'Go to Cart' 
+                : 'Add to Cart'
+          }
         >
-          {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+          {product.stock <= 0 
+            ? 'Out of Stock' 
+            : isInCart 
+              ? 'Go to Cart' 
+              : 'Add to Cart'}
         </Button>
       </View>
 
       {/* Related Products */}
-      <View className="mt-8 px-4">
-        <Text className="text-xl font-bold mb-4">You Might Also Like</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {memoizedRelatedProducts.map((product) => (
-            <ProductCard
-              key={product.$id}
-              image={{ uri: product.imageUrl }}
-              name={product.name}
-              price={`₹${product.price}`}
-              mrp={product.mrp ? `₹${product.mrp}` : undefined}
-              discount={product.discount ? `${product.discount}% OFF` : undefined}
-              onPress={() => handleProductPress(product.$id)}
-            />
-          ))}
-        </ScrollView>
-      </View>
+      {memoizedRelatedProducts.length > 0 && (
+        <View className="mt-8 px-4 pb-8">
+          <Text className="text-xl font-bold mb-4">You Might Also Like</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {memoizedRelatedProducts.map((relatedProduct) => (
+              <ProductCard
+                key={relatedProduct.$id}
+                image={{ uri: relatedProduct.imageUrl }}
+                name={relatedProduct.name}
+                price={`₹${relatedProduct.price}`}
+                mrp={relatedProduct.mrp ? `₹${relatedProduct.mrp}` : undefined}
+                discount={relatedProduct.discount ? `${relatedProduct.discount}% OFF` : undefined}
+                onPress={() => handleProductPress(relatedProduct.$id)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {/* Toast Component */}
       <Toast />
