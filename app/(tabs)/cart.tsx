@@ -1,6 +1,3 @@
-
-
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,7 +32,7 @@ const CartScreen: React.FC = () => {
 
   const { user } = useGlobalContext();
 
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
       const userId = user?.$id.toString();
       const cart = await fetchCart(userId || '');
@@ -50,18 +47,18 @@ const CartScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Initial load
   useEffect(() => {
     loadCart();
-  }, [user]);
+  }, [loadCart]);
 
   // Refresh cart on screen focus
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       loadCart();
-    }, [user])
+    }, [loadCart])
   );
 
   const updateQuantity = async (productId: string, newQuantity: number) => {

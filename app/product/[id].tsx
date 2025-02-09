@@ -1,15 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -21,7 +10,7 @@ import { Product } from '../../types/productTypes';
 import ProductCard from '../../components/customComponents/ProductCard';
 import { addToCart, fetchCart } from '../../lib/handleCart';
 import { useGlobalContext } from '@/context/GlobalProvider';
-
+import QuantityModal from '@/components/customComponents/cart/CartDialogBox';
 
 
 interface CartItem {
@@ -42,6 +31,11 @@ const ProductScreen = () => {
   const [isInCart, setIsInCart] = useState(false);
   const { user } = useGlobalContext();
 
+  const [isQuantityModalVisible, setIsQuantityModalVisible] = useState(false);
+
+
+ 
+
   // Check if product is in cart
   const checkIfInCart = async () => {
     if (!user || !product) return;
@@ -53,6 +47,8 @@ const ProductScreen = () => {
       console.error('Error checking cart:', error);
     }
   };
+
+ 
 
   // Fetch product details
   useEffect(() => {
@@ -107,39 +103,47 @@ const ProductScreen = () => {
     loadRelatedProducts();
   }, [product]);
 
-  const handleAddToCart = async () => {
-    if (!user) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Please log in to add items to your cart.',
-      });
-      return;
-    }
+  // Update the function signature to accept quantity
+const handleAddToCart = async (quantity: number = 1) => {
+  if (!user) {
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: 'Please log in to add items to your cart.',
+    });
+    return;
+  }
 
-    try {
-      await addToCart(user.$id, product!.$id, 1, product!.price, product!.imageUrl, product!.name);
-      setIsInCart(true);
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Product added to cart!',
-      });
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to add product to cart. Please try again.',
-      });
-    }
-  };
+  try {
+    await addToCart(
+      user.$id, 
+      product!.$id, 
+      quantity,  // Use the quantity parameter here
+      product!.price, 
+      product!.imageUrl, 
+      product!.name
+    );
+    setIsInCart(true);
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: 'Product added to cart!',
+    });
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: 'Failed to add product to cart. Please try again.',
+    });
+  }
+};
 
   const handleCartAction = () => {
     if (isInCart) {
       router.push('/cart');
     } else {
-      handleAddToCart();
+      setIsQuantityModalVisible(true);
     }
   };
 
@@ -258,6 +262,14 @@ const ProductScreen = () => {
         </View>
       )}
 
+
+{/* Quantity Modal */}
+<QuantityModal
+  visible={isQuantityModalVisible}
+  onClose={() => setIsQuantityModalVisible(false)}
+  onConfirm={(quantity: number) => handleAddToCart(quantity)}
+  maxQuantity={product.stock}
+/>
       {/* Toast Component */}
       <Toast />
     </ScrollView>

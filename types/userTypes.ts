@@ -8,6 +8,7 @@ export interface User {
   shopName: string; // Name of the shop
   password: string; // Unique password (required for validation)
   profileUrl?: string; // Optional profile image URL
+  pincode: string; // Pincode
   createdAt: string; // Timestamp when the user was created
   updatedAt: string; // Timestamp when the user was last updated
 }

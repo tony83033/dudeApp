@@ -24,11 +24,18 @@ export const fetchUserDetails = async (id: string): Promise<User> => {
         const userData = user.documents[0]; 
         // console.log("this is userData:", userData);
 
+     
+
         return {
             userId: userData.userId,
             email: userData.email,
             name: userData.name ?? '',
             phone: userData.phone ?? '',
+            retailCode: userData.retailCode ?? '',
+            address: userData.address ?? '',
+            shopName: userData.shopName ?? '',
+            password: userData.password ?? '',
+            pincode: userData.pincode ?? '',
             profileUrl: userData.profileUrl ?? '',
             createdAt: userData.$createdAt,
             updatedAt: userData.$updatedAt,

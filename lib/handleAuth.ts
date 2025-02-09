@@ -20,6 +20,7 @@ import {
     retailCode,
     address,
     shopName,
+    pincode, // Add pincode as a parameter
   }: {
     email: string;
     password: string;
@@ -28,6 +29,7 @@ import {
     retailCode: string;
     address: string;
     shopName: string;
+    pincode: string; // Add pincode to the type definition
   }) {
     try {
       // Step 1: Validate that the phone number is unique
@@ -59,6 +61,7 @@ import {
         retailCode,
         address,
         shopName,
+        pincode, // Include pincode
         password, // Store the password (no uniqueness check required)
         createdAt: new Date().toISOString(), // Current timestamp
         updatedAt: new Date().toISOString(), // Current timestamp
@@ -80,7 +83,6 @@ import {
       throw new Error(error instanceof Error ? error.message : String(error));
     }
   }
-  
 
 
   export async function signIn(phone: string, password: string) {

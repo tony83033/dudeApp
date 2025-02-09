@@ -31,6 +31,7 @@ const SignUp = () => {
   const [retailCode, setRetailCode] = useState('');
   const [address, setAddress] = useState('');
   const [shopName, setShopName] = useState('');
+  const [pincode, setpincode] = useState(''); // New state for pincode
 
   // Validate password to ensure it's exactly 8 digits
   const validatePassword = (password: string) => {
@@ -57,7 +58,8 @@ const SignUp = () => {
       password === '' ||
       retailCode === '' ||
       address === '' ||
-      shopName === ''
+      shopName === '' ||
+      pincode === '' // Validate pincode
     ) {
       Toast.show({
         type: 'error',
@@ -82,6 +84,7 @@ const SignUp = () => {
         retailCode,
         address,
         shopName,
+        pincode, // Include pincode
       });
       setUser(result);
       setIsLogged(true);
@@ -97,7 +100,7 @@ const SignUp = () => {
       router.replace('/home');
     } catch (error) {
       // Show error toast
-      console.log(error)
+      console.log(error);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -207,6 +210,18 @@ const SignUp = () => {
                   placeholder="Enter your shop name"
                   value={shopName}
                   onChangeText={setShopName}
+                />
+              </View>
+
+              {/* Carrier Pin Code Input */}
+              <View>
+                <Text className="text-sm font-medium mb-1 text-gray-700">Carrier Pin Code</Text>
+                <TextInput
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200"
+                  placeholder="Enter your carrier pin code"
+                  value={pincode}
+                  onChangeText={setpincode}
+                  keyboardType="numeric"
                 />
               </View>
 

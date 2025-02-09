@@ -21,6 +21,7 @@ export const appwriteConfig = {
     ordersCollectionId: "678422cc000435240434",
     reviewsCollectionId: "67842677000e2ff86cd8",
     topCategoriesCollectionId: "6784f04b001d5ad03d85",
+    productOfTheDayCollectionId:"67a052e00031d601a6b5",
     cartsCollectionId: "6787910e000842462c22",
 
   };

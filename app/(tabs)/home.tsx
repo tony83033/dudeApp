@@ -15,6 +15,7 @@ import { fetchFeaturedProducts, fetchTopCategories } from '../../lib/fetchProduc
 import { Product } from '../../types/productTypes';
 import { Category } from '@/types/categoryTypes';
 import FastImage from 'react-native-fast-image';
+import ProductOfTheDay from '@/components/customComponents/home/ProdectOfTheDay';
 
 const { width } = Dimensions.get('window');
 
@@ -176,7 +177,7 @@ const Home: React.FC = () => {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Banner */}
       {/* to do render product of the day */}
-
+            <ProductOfTheDay/>
         {/* Quick Links */}
         <View className="flex-row justify-between px-4 py-2">
           {QUICK_LINKS.map((link, index) => (
