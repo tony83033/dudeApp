@@ -74,11 +74,11 @@ const CartScreen: React.FC = () => {
       );
       await updateCart(userId || '', updatedItems);
       await loadCart(); // Refresh cart data
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Quantity updated successfully!',
-      });
+      // Toast.show({
+      //   type: 'success',
+      //   text1: 'Success',
+      //   text2: 'Quantity updated successfully!',
+      // });
     } catch (error) {
       console.error('Error updating quantity:', error);
       Toast.show({
@@ -94,11 +94,11 @@ const CartScreen: React.FC = () => {
       const userId = user?.$id.toString();
       await removeFromCart(userId || '', productId);
       await loadCart(); // Refresh cart data
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Item removed from cart!',
-      });
+      // Toast.show({
+      //   type: 'success',
+      //   text1: 'Success',
+      //   text2: 'Item removed from cart!',
+      // });
     } catch (error) {
       console.error('Error removing item:', error);
       Toast.show({
@@ -133,6 +133,14 @@ const CartScreen: React.FC = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const ProceedToCheckout = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Success',
+      text2: 'Order Place Successfully',
+    });
+  };
 
   const renderHeader = () => (
     <View className="p-4 border-b border-gray-200 shadow-sm">
@@ -195,7 +203,7 @@ const CartScreen: React.FC = () => {
                 <Text className="font-bold">₹{totalAmount}</Text>
               </View>
               <Button
-                onPress={() => console.log('Proceed to checkout')}
+                onPress={ProceedToCheckout}
                 className="bg-blue-500"
               >
                 Proceed to Checkout

@@ -15,8 +15,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff",
-        "package":"com.dude"
-      }
+        "package": "com.dude"
+      },
+      "package": "com.sumit9897.dude"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +38,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "2bd493e6-5e9f-4739-8391-436cf7f0d0c5"
+      }
     }
   }
 }
