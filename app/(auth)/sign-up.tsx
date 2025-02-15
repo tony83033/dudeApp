@@ -56,7 +56,7 @@ const SignUp = () => {
       phone === '' ||
       email === '' ||
       password === '' ||
-      retailCode === '' ||
+      
       address === '' ||
       shopName === '' ||
       pincode === '' // Validate pincode
