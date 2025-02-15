@@ -13,6 +13,7 @@ export interface Product {
     imageUrl: string;
     isFeatured: boolean;
     mrp: number | null; // MRP can be null
+    unit: string;
     name: string;
     price: number;
     productId: string;

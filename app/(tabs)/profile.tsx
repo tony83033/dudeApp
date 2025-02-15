@@ -124,7 +124,7 @@ const ProfileScreen: React.FC = () => {
       <ScrollView>
         <MenuItem icon="share-social-outline" title="Share App" onPress={handleShare} />
         <MenuItem icon="document-text-outline" title="My Orders" onPress={() => router.push('/orders' as any)} />
-        <MenuItem icon="wallet-outline" title="My Earnings" onPress={() => router.push('/earnings' as any)} />
+        {/* <MenuItem icon="wallet-outline" title="My Earnings" onPress={() => router.push('/earnings' as any)} /> */}
         <MenuItem icon="people-outline" title="My Referral" onPress={() => router.push('/referral' as any)} />
         <MenuItem icon="headset-outline" title="Customer Support" onPress={() => router.push('/support' as any)} />
         <MenuItem icon="language-outline" title="Change Language" onPress={() => router.push('/language' as any)} />

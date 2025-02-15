@@ -207,6 +207,14 @@ const handleAddToCart = async (quantity: number = 1) => {
           )}
         </View>
 
+        {/* display unit */}
+
+        <View className="mt-2">
+  <Text className="text-green-600">
+    Unit: {product.unit || 'kg'}
+  </Text>
+</View>
+
         {/* Stock Availability */}
         <View className="mt-4">
           <Text className="text-gray-600">

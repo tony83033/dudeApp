@@ -138,6 +138,9 @@ const CartScreen: React.FC = () => {
   );
 
   const ProceedToCheckout = async () => {
+    if (loading) return; // Prevent multiple clicks
+    // todo
+    // prentet reload when click on button
     setLoading(true);
     // setError(null);
 
@@ -148,12 +151,14 @@ const CartScreen: React.FC = () => {
       // Step 2: Create the order
       const orderId = await createOrder(user!.$id.toString(), cartItems, totalAmount, deliveryAddress);
 
+
+     
       // Step 3: Clear the cart
       await clearCart(user!.$id.toString());
       setCartItems([]);  // Clear cart state
 
-      // Step 4: Show success toast
-      Toast.show({
+       // Step 4: Show success toast
+       Toast.show({
         type: 'success',
         text1: 'Success',
         text2: `Order placed successfully!`,
@@ -161,6 +166,7 @@ const CartScreen: React.FC = () => {
 
       // Optionally, navigate to the order details screen
       // router.push(`/order/${orderId}`);
+      router.push("/orders");
 
     } catch (error) {
       // Step 5: Show error toast
@@ -235,12 +241,15 @@ const CartScreen: React.FC = () => {
                 <Text className="text-gray-600">Total Amount</Text>
                 <Text className="font-bold">₹{totalAmount}</Text>
               </View>
-              <Button
-                onPress={ProceedToCheckout}
-                className="bg-blue-500"
-              >
-                Proceed to Checkout
-              </Button>
+              {/* // Update the Button component in the bottom sheet section */}
+<Button
+  onPress={ProceedToCheckout}
+  className="bg-blue-500"
+  disabled={loading} // Disable button while loading
+>
+  <Text>  {loading ? 'Processing...' : 'Proceed to Checkout'}</Text>
+
+</Button>
               <TouchableOpacity onPress={handleClearCart} className="mt-2">
                 <Text className="text-red-500 text-center">Clear Cart</Text>
               </TouchableOpacity>

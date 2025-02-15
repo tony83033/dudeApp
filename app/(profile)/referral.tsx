@@ -39,15 +39,15 @@ export default function ReferralScreen() {
       {/* Referral Stats */}
       <View className="mt-8">
         <Text className="text-lg font-bold mb-4">Your Referrals</Text>
-        <View className="flex-row justify-between">
+        <View className="flex-col justify-between">
           <View className="items-center">
             <Text className="text-2xl font-bold">5</Text>
             <Text className="text-gray-500">Total Referrals</Text>
           </View>
-          <View className="items-center">
+          {/* <View className="items-center">
             <Text className="text-2xl font-bold text-green-600">₹500</Text>
             <Text className="text-gray-500">Total Earnings</Text>
-          </View>
+          </View> */}
         </View>
       </View>
     </View>

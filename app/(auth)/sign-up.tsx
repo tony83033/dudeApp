@@ -180,7 +180,7 @@ const SignUp = () => {
               </View>
 
               {/* Retail Code Input */}
-              <View>
+              {/* <View>
                 <Text className="text-sm font-medium mb-1 text-gray-700">Retail Code</Text>
                 <TextInput
                   className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200"
@@ -189,7 +189,7 @@ const SignUp = () => {
                   onChangeText={setRetailCode}
                   keyboardType="numeric"
                 />
-              </View>
+              </View> */}
 
               {/* Address Input */}
               <View>

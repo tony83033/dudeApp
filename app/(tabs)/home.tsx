@@ -179,7 +179,7 @@ const Home: React.FC = () => {
       {/* to do render product of the day */}
             <ProductOfTheDay/>
         {/* Quick Links */}
-        <View className="flex-row justify-between px-4 py-2">
+        {/* <View className="flex-row justify-between px-4 py-2">
           {QUICK_LINKS.map((link, index) => (
             <QuickLink 
               key={index}
@@ -188,7 +188,7 @@ const Home: React.FC = () => {
               onPress={() => console.log(`Pressed ${link.title}`)}
             />
           ))}
-        </View>
+        </View> */}
 
         {/* City Best Sellers */}
         <Section 
