@@ -38,7 +38,7 @@ export const addToCart = async (
       appwriteConfig.cartsCollectionId,
       [Query.equal('userId', userId)]
     );
-
+// this is important as item in cart is stored as string array so we need to convert it to string
     const newItem = JSON.stringify({ productId, quantity, price, imageUrl, name });
 
     if (response.documents.length > 0) {

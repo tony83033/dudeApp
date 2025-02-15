@@ -11,7 +11,8 @@ import { useGlobalContext } from '@/context/GlobalProvider';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-
+import { createOrder } from '@/lib/handleOrder';
+import { fetchUserAddress } from '@/lib/handleUser';
 interface CartItem {
   productId: string;
   name: string;
@@ -37,6 +38,8 @@ const CartScreen: React.FC = () => {
       const userId = user?.$id.toString();
       const cart = await fetchCart(userId || '');
       setCartItems(cart.items || []);
+
+      console.log('Cart items:', cartItems);
     } catch (error) {
       console.error('Error fetching cart:', error);
       Toast.show({
@@ -134,12 +137,42 @@ const CartScreen: React.FC = () => {
     0
   );
 
-  const ProceedToCheckout = () => {
-    Toast.show({
-      type: 'success',
-      text1: 'Success',
-      text2: 'Order Place Successfully',
-    });
+  const ProceedToCheckout = async () => {
+    setLoading(true);
+    // setError(null);
+
+    try {
+      // Step 1: Fetch the delivery address
+      const deliveryAddress = await fetchUserAddress(user!.$id.toString());
+      console.log('Delivery Address:', deliveryAddress);
+      // Step 2: Create the order
+      const orderId = await createOrder(user!.$id.toString(), cartItems, totalAmount, deliveryAddress);
+
+      // Step 3: Clear the cart
+      await clearCart(user!.$id.toString());
+      setCartItems([]);  // Clear cart state
+
+      // Step 4: Show success toast
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: `Order placed successfully!`,
+      });
+
+      // Optionally, navigate to the order details screen
+      // router.push(`/order/${orderId}`);
+
+    } catch (error) {
+      // Step 5: Show error toast
+      // setError(error instanceof Error ? error.message : 'Failed to place order');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to place the order. Please try again.',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderHeader = () => (

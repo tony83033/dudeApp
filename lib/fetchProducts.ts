@@ -189,3 +189,7 @@ export async function fetchTopCategories(): Promise<Category[]> {
     return [];
   }
 }
+
+// export async function fetchProductOfTheDay():Promise<Product[]>{
+//   return 
+// }
